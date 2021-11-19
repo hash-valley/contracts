@@ -17,7 +17,7 @@ interface IERC721 {
         uint256 tokenId
     ) external;
 
-    function burn(uint tokenId) external;
+    function burn(uint256 tokenId) external;
 }
 
 interface VinegarContract {
@@ -87,11 +87,14 @@ contract CellarV1 {
     }
 
     function onERC721Received(
-        address, 
-        address, 
-        uint256, 
+        address,
+        address,
+        uint256,
         bytes calldata
-    )external returns(bytes4) {
-        return bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
-    } 
+    ) external returns (bytes4) {
+        return
+            bytes4(
+                keccak256("onERC721Received(address,address,uint256,bytes)")
+            );
+    }
 }

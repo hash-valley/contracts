@@ -9,7 +9,10 @@ import "./IAddressStorage.sol";
 contract Vinegar is ERC20, ERC20Permit {
     IAddressStorage public addressStorage;
 
-    constructor(address _addressStorage) ERC20("Vinegar", "VNG") ERC20Permit("Vinegar") {
+    constructor(address _addressStorage)
+        ERC20("Vinegar", "VNG")
+        ERC20Permit("Vinegar")
+    {
         addressStorage = IAddressStorage(_addressStorage);
     }
 

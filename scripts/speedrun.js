@@ -11,26 +11,26 @@ async function start() {
     [
       "function currSeason() public view returns (uint256)",
       "function waterMultiple(uint256[] calldata _tokenIds) public",
-      "function minWaterTime(uint256 _tokenId) public view returns (uint256)"
+      "function minWaterTime(uint256 _tokenId) public view returns (uint256)",
     ],
     signer
   );
 
-  let days
-  const currSeason = await vineyard.currSeason()
+  let days;
+  const currSeason = await vineyard.currSeason();
   if (currSeason == 0) {
-    console.log("game not started")
-    return
+    console.log("game not started");
+    return;
   } else if (currSeason == 1) {
-    days = 14
+    days = 14;
   } else {
-    days = 77
+    days = 77;
   }
 
-  let time = Number(await vineyard.minWaterTime(0))
+  let time = Number(await vineyard.minWaterTime(0));
   for (let i = 0; i <= days; i++) {
     await ethers.provider.send("evm_increaseTime", [time]);
-    await vineyard.connect(accounts[2]).waterMultiple([0])
+    await vineyard.connect(accounts[2]).waterMultiple([0]);
   }
 }
 

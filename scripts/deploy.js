@@ -1,5 +1,5 @@
 const hre = require("hardhat");
-const config = require("../config.json")
+const config = require("../config.json");
 
 async function deploy() {
   const Storage = await hre.ethers.getContractFactory("AddressStorage");
@@ -8,7 +8,11 @@ async function deploy() {
   console.log("Address Storage deployed to:", storage.address);
 
   const Vineyard = await hre.ethers.getContractFactory("VineyardV1");
-  const vineyard = await Vineyard.deploy(config.vine_base_uri, config.vine_img_uri, storage.address);
+  const vineyard = await Vineyard.deploy(
+    config.vine_base_uri,
+    config.vine_img_uri,
+    storage.address
+  );
   await vineyard.deployed();
   console.log("Vineyard deployed to:", vineyard.address);
 
@@ -18,7 +22,11 @@ async function deploy() {
   console.log("Cellar deployed to:", cellar.address);
 
   const WineBottle = await hre.ethers.getContractFactory("WineBottleV1");
-  const bottle = await WineBottle.deploy(config.bottle_base_uri, config.bottle_img_uri, storage.address);
+  const bottle = await WineBottle.deploy(
+    config.bottle_base_uri,
+    config.bottle_img_uri,
+    storage.address
+  );
   await bottle.deployed();
   console.log("Bottle deployed to:", bottle.address);
 
@@ -32,7 +40,7 @@ async function deploy() {
     vinegar.address,
     vineyard.address,
     bottle.address
-  )
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere

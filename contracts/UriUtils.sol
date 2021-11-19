@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 library UriUtils {
-  function uint2str(uint256 _i)
+    function uint2str(uint256 _i)
         internal
         pure
         returns (string memory _uintAsString)

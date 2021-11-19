@@ -16,7 +16,7 @@ contract AddressStorage is IAddressStorage {
     event AddressesSet();
 
     constructor() {
-      deployer = msg.sender;
+        deployer = msg.sender;
     }
 
     function setAddresses(
