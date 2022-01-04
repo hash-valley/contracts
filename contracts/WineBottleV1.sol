@@ -41,7 +41,7 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
     mapping(uint256 => string) public imgVersions;
     uint256 public imgVersionCount = 0;
     mapping(uint256 => address) public artists;
-    uint8 public immutable sellerFee = 250;
+    uint16 public immutable sellerFee = 850;
 
     event Rejuvenated(uint256 oldTokenId, uint256 newTokenId);
 
@@ -52,7 +52,9 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
         address _addressStorage
     ) ERC721("Hash Valley Vintage", "VNTG") {
         setBaseURI(_baseUri);
-        updateImg(_imgUri, msg.sender);
+        imgVersions[imgVersionCount] = _imgUri;
+        artists[imgVersionCount] = msg.sender;
+        imgVersionCount += 1;
         addressStorage = IAddressStorage(_addressStorage);
     }
 
@@ -111,39 +113,155 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
         baseUri = _baseUri;
     }
 
-    function updateImg(string memory imgUri, address artist) public onlyOwner {
-        imgVersions[imgVersionCount] = imgUri;
-        artists[imgVersionCount] = artist;
-        imgVersionCount += 1;
-    }
-
     function tokenURI(uint256 tokenId)
         public
         view
         override
         returns (string memory)
     {
-        return tokenURIHistorical(tokenId, imgVersionCount - 1);
+        return bottleMetadata(tokenId, imgVersionCount - 1);
     }
 
-    function tokenURIHistorical(uint256 tokenId, uint256 version)
+    function bottleMetadata(uint256 _tokenId, uint256 _version)
         public
         view
         returns (string memory)
     {
         require(
-            _exists(tokenId),
+            _exists(_tokenId),
             "ERC721Metadata: URI query for nonexistent token"
         );
-        return
-            string(
-                abi.encodePacked(
-                    baseUri,
-                    "/?version=",
-                    UriUtils.uint2str(version),
-                    "&token=",
-                    UriUtils.uint2str(tokenId)
+
+        uint256 attr = attributes[_tokenId];
+        string memory json = UriUtils.encodeBase64(
+            bytes(
+                string(
+                    abi.encodePacked(
+                        string(
+                            abi.encodePacked(
+                                '{"name": "Hash Valley Winery Bottle ',
+                                UriUtils.uint2str(_tokenId),
+                                '", "external_url": "',
+                                baseUri,
+                                "/api/bottle?version=",
+                                UriUtils.uint2str(_version),
+                                "&token=",
+                                UriUtils.uint2str(_tokenId),
+                                '", "description": "A wine bottle...", "image": "'
+                            )
+                        ),
+                        string(
+                            abi.encodePacked(
+                                imgVersions[_version],
+                                "?seed=",
+                                UriUtils.uint2str(attr),
+                                "-",
+                                UriUtils.uint2str(bottleAge(_tokenId))
+                            )
+                        ),
+                        string(
+                            abi.encodePacked(
+                                '"seller_fee_basis_points": ',
+                                UriUtils.uint2str(sellerFee),
+                                ", "
+                            )
+                        ),
+                        string(
+                            abi.encodePacked(
+                                '"fee_recipient": "0x',
+                                UriUtils.toAsciiString(artists[_version]),
+                                '"'
+                            )
+                        ),
+                        "}"
+                    )
                 )
-            );
+            )
+        );
+        string memory output = string(
+            abi.encodePacked("data:application/json;base64,", json)
+        );
+
+        return output;
+    }
+
+    // UPDATING
+    uint256 startTimestamp;
+    mapping(uint256 => uint256) voted;
+    uint256 forVotes;
+    uint256 againstVotes;
+    string newUri;
+    address artist;
+    bool settled = true;
+
+    event Suggest(
+        uint256 startTimestamp,
+        string newUri,
+        address artist,
+        uint256 bottle,
+        uint256 forVotes
+    );
+    event Support(uint256 startTimestamp, uint256 bottle, uint256 forVotes);
+    event Retort(uint256 startTimestamp, uint256 bottle, uint256 againstVotes);
+    event Complete(uint256 startTimestamp);
+
+    function suggest(
+        uint256 _tokenId,
+        string calldata _newUri,
+        address _artist
+    ) public {
+        require(
+            (forVotes == 0 && againstVotes == 0) ||
+                (forVotes > againstVotes &&
+                    startTimestamp + 9 days < block.timestamp) ||
+                (forVotes > againstVotes &&
+                    startTimestamp + 48 hours < block.timestamp &&
+                    !settled) ||
+                (againstVotes > forVotes &&
+                    startTimestamp + 36 hours < block.timestamp),
+            "Too soon"
+        );
+        require(ownerOf(_tokenId) == msg.sender, "Bottle not owned");
+
+        startTimestamp = block.timestamp;
+        voted[_tokenId] = block.timestamp;
+        forVotes = bottleAge(_tokenId);
+        againstVotes = 0;
+        newUri = _newUri;
+        artist = _artist;
+        settled = false;
+        emit Suggest(startTimestamp, _newUri, _artist, _tokenId, forVotes);
+    }
+
+    function support(uint256 _tokenId) public {
+        require(ownerOf(_tokenId) == msg.sender, "Bottle not owned");
+        require(voted[_tokenId] + 36 hours < block.timestamp, "Double vote");
+        require(startTimestamp + 36 hours > block.timestamp, "No queue");
+
+        voted[_tokenId] = block.timestamp;
+        forVotes += bottleAge(_tokenId);
+        emit Support(startTimestamp, _tokenId, forVotes);
+    }
+
+    function retort(uint256 _tokenId) public {
+        require(ownerOf(_tokenId) == msg.sender, "Bottle not owned");
+        require(voted[_tokenId] + 36 hours < block.timestamp, "Double vote");
+        require(startTimestamp + 36 hours > block.timestamp, "No queue");
+
+        voted[_tokenId] = block.timestamp;
+        againstVotes += bottleAge(_tokenId);
+        emit Retort(startTimestamp, _tokenId, againstVotes);
+    }
+
+    function complete() public {
+        require(forVotes > againstVotes, "Blocked");
+        require(startTimestamp + 36 hours < block.timestamp, "Too soon");
+        require(startTimestamp + 48 hours > block.timestamp, "Too late");
+
+        imgVersions[imgVersionCount] = newUri;
+        artists[imgVersionCount] = artist;
+        imgVersionCount += 1;
+        settled = true;
+        emit Complete(startTimestamp);
     }
 }

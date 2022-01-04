@@ -82,11 +82,9 @@ describe("Hash Valley tests", function () {
           );
       }
       await expect(
-        vineyard
-          .connect(accounts[1])
-          .newVineyards([4, 2, 0, 4], {
-            value: ethers.utils.parseEther("0.04"),
-          })
+        vineyard.connect(accounts[1]).newVineyards([4, 2, 0, 4], {
+          value: ethers.utils.parseEther("0.04"),
+        })
       ).to.be.revertedWith("Value below price");
 
       const tx = await vineyard
@@ -157,7 +155,7 @@ describe("Hash Valley tests", function () {
 
     it("token uri", async () => {
       await vineyard.connect(accounts[1]).newVineyards([12, 130, 0, 3]);
-      let uri = await vineyard.tokenURI(0);
+      let uri = await vineyard.vineMetadata(0);
       console.log(uri);
     });
   });
