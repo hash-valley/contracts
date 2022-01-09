@@ -1,11 +1,9 @@
 //SPDX-License-Identifier: Unlicensed
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "base64-sol/base64.sol";
 import "./UriUtils.sol";
 import "./IAddressStorage.sol";
 
@@ -35,7 +33,7 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
 
     uint256 public lastId = 0;
     mapping(uint256 => uint256) public bottleMinted;
-    mapping(uint256 => uint256) public attributes;
+    mapping(uint256 => uint8[]) public attributes;
 
     string public baseUri;
     mapping(uint256 => string) public imgVersions;
@@ -44,6 +42,12 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
     uint16 public immutable sellerFee = 850;
 
     event Rejuvenated(uint256 oldTokenId, uint256 newTokenId);
+    event BottleMinted(uint256 tokenId, uint8[] attributes);
+
+    uint256 internal wineClasses = 4;
+    uint8[4] internal wineSubtypes = [3, 2, 2, 3];
+    uint8[4][] internal wineNotes;
+    uint8[][][] internal wineTypes;
 
     // CONSTRUCTOR
     constructor(
@@ -56,6 +60,30 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
         artists[imgVersionCount] = msg.sender;
         imgVersionCount += 1;
         addressStorage = IAddressStorage(_addressStorage);
+
+        wineNotes.push([4, 4, 1]);
+        wineNotes.push([5, 2]);
+        wineNotes.push([2, 1]);
+        wineNotes.push([4, 3, 2]);
+
+        wineTypes.push(new uint8[][](3));
+        wineTypes.push(new uint8[][](2));
+        wineTypes.push(new uint8[][](2));
+        wineTypes.push(new uint8[][](3));
+
+        wineTypes[0].push([6, 8, 7, 5]);
+        wineTypes[0].push([6, 5, 7, 13]);
+        wineTypes[0].push([3]);
+
+        wineTypes[1].push([7, 8, 7, 8, 9]);
+        wineTypes[1].push([6, 6]);
+
+        wineTypes[2].push([5, 6]);
+        wineTypes[2].push([6]);
+
+        wineTypes[3].push([4, 7, 5, 5]);
+        wineTypes[3].push([3, 2, 2]);
+        wineTypes[3].push([3, 3]);
     }
 
     // PUBLIC FUNCTIONS
@@ -74,24 +102,8 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
         return block.timestamp - bottleMinted[_tokenID] + cellarAged;
     }
 
-    function newBottle(uint256 _vineyard) external returns (uint256) {
-        address vineyard = addressStorage.vineyard();
-        require(msg.sender == vineyard, "Can only be called by Vineyard");
-
-        uint256 tokenID = totalSupply();
-        bottleMinted[tokenID] = block.timestamp;
-        // TODO: some hooha with vineyard id for attributes
-        uint16[] memory vinParams = Vineyard(vineyard).getTokenAttributes(
-            _vineyard
-        );
-        attributes[tokenID] = vinParams[0] + vinParams[1] + vinParams[3];
-        _safeMint(tx.origin, tokenID);
-        lastId = tokenID;
-        return tokenID;
-    }
-
     function rejuvenate(uint256 _oldTokenId) public returns (uint256) {
-        require(attributes[_oldTokenId] != 0, "cannot rejuve");
+        require(attributes[_oldTokenId].length > 0, "cannot rejuve");
         address cellar = addressStorage.cellar();
         uint256 cellarTime = CellarContract(cellar).cellarTime(_oldTokenId);
         IVinegar(addressStorage.vinegar()).burn(
@@ -101,11 +113,59 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
 
         uint256 tokenId = lastId + 1;
         attributes[tokenId] = attributes[_oldTokenId];
-        attributes[_oldTokenId] = 0;
+        delete attributes[_oldTokenId];
         _safeMint(tx.origin, tokenId);
         lastId = tokenId;
         emit Rejuvenated(_oldTokenId, tokenId);
         return tokenId;
+    }
+
+    // MINTING FUNCTIONS
+
+    function random(string memory input) internal pure returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(input)));
+    }
+
+    function newBottle(uint256 _vineyard) external returns (uint256) {
+        address vineyard = addressStorage.vineyard();
+        require(msg.sender == vineyard, "Can only be called by Vineyard");
+
+        uint256 tokenID = totalSupply();
+        bottleMinted[tokenID] = block.timestamp;
+
+        // TODO: some hooha with vineyard id for attributes
+        uint16[] memory vinParams = Vineyard(vineyard).getTokenAttributes(
+            _vineyard
+        );
+        uint256 rand1 = random(
+            string(abi.encodePacked(block.timestamp, tokenID))
+        );
+        uint256 rand2 = random(
+            string(abi.encodePacked(block.timestamp + 1, tokenID))
+        );
+        uint256 rand3 = random(
+            string(abi.encodePacked(block.timestamp + 2, tokenID))
+        );
+        uint256 rand4 = random(
+            string(abi.encodePacked(block.timestamp + 3, tokenID))
+        );
+        uint256 bottleClass = rand1 % wineClasses;
+        uint256 bottleSubtype = rand2 % wineSubtypes[bottleClass];
+        uint256 bottleNote = rand3 % wineNotes[bottleClass][bottleSubtype];
+        uint256 bottleType = rand4 %
+            wineTypes[bottleClass][bottleSubtype][bottleNote];
+
+        attributes[tokenID] = [
+            uint8(bottleClass),
+            uint8(bottleSubtype),
+            uint8(bottleNote),
+            uint8(bottleType)
+        ];
+        _safeMint(tx.origin, tokenID);
+        lastId = tokenID;
+
+        emit BottleMinted(tokenID, attributes[tokenID]);
+        return tokenID;
     }
 
     // URI
@@ -132,7 +192,7 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
             "ERC721Metadata: URI query for nonexistent token"
         );
 
-        uint256 attr = attributes[_tokenId];
+        uint8[] memory attr = attributes[_tokenId];
         string memory json = UriUtils.encodeBase64(
             bytes(
                 string(
@@ -154,7 +214,13 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
                             abi.encodePacked(
                                 imgVersions[_version],
                                 "?seed=",
-                                UriUtils.uint2str(attr),
+                                UriUtils.uint2str(attr[0]),
+                                "-",
+                                UriUtils.uint2str(attr[1]),
+                                "-",
+                                UriUtils.uint2str(attr[2]),
+                                "-",
+                                UriUtils.uint2str(attr[3]),
                                 "-",
                                 UriUtils.uint2str(bottleAge(_tokenId))
                             )
