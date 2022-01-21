@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./UriUtils.sol";
 import "./IAddressStorage.sol";
+import "hardhat/console.sol";
 
 interface CellarContract {
     function cellarTime(uint256 _tokenID) external view returns (uint256);
@@ -71,19 +72,53 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
         wineTypes.push(new uint8[][](2));
         wineTypes.push(new uint8[][](3));
 
-        wineTypes[0].push([6, 8, 7, 5]);
-        wineTypes[0].push([6, 5, 7, 13]);
-        wineTypes[0].push([3]);
+        wineTypes[0].push(new uint8[](4));
+        wineTypes[0][0].push(6);
+        wineTypes[0][0].push(8);
+        wineTypes[0][0].push(7);
+        wineTypes[0][0].push(5);
 
-        wineTypes[1].push([7, 8, 7, 8, 9]);
-        wineTypes[1].push([6, 6]);
+        wineTypes[0].push(new uint8[](4));
+        wineTypes[0][1].push(6);
+        wineTypes[0][1].push(5);
+        wineTypes[0][1].push(7);
+        wineTypes[0][1].push(13);
 
-        wineTypes[2].push([5, 6]);
-        wineTypes[2].push([6]);
+        wineTypes[0].push(new uint8[](1));
+        wineTypes[0][2].push(3);
 
-        wineTypes[3].push([4, 7, 5, 5]);
-        wineTypes[3].push([3, 2, 2]);
-        wineTypes[3].push([3, 3]);
+        wineTypes[1].push(new uint8[](5));
+        wineTypes[1][0].push(7);
+        wineTypes[1][0].push(8);
+        wineTypes[1][0].push(7);
+        wineTypes[1][0].push(8);
+        wineTypes[1][0].push(9);
+
+        wineTypes[1].push(new uint8[](2));
+        wineTypes[1][1].push(6);
+        wineTypes[1][1].push(6);
+
+        wineTypes[2].push(new uint8[](2));
+        wineTypes[2][0].push(5);
+        wineTypes[2][0].push(6);
+
+        wineTypes[2].push(new uint8[](1));
+        wineTypes[2][1].push(6);
+
+        wineTypes[3].push(new uint8[](4));
+        wineTypes[3][0].push(4);
+        wineTypes[3][0].push(7);
+        wineTypes[3][0].push(5);
+        wineTypes[3][0].push(5);
+
+        wineTypes[3].push(new uint8[](3));
+        wineTypes[3][1].push(3);
+        wineTypes[3][1].push(2);
+        wineTypes[3][1].push(2);
+
+        wineTypes[3].push(new uint8[](2));
+        wineTypes[3][2].push(3);
+        wineTypes[3][2].push(3);
     }
 
     // PUBLIC FUNCTIONS
