@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./UriUtils.sol";
 import "./IAddressStorage.sol";
@@ -28,9 +27,10 @@ interface Vineyard {
         returns (uint16[] memory attributes);
 }
 
-contract WineBottleV1 is ERC721Enumerable, Ownable {
+contract WineBottleV1 is ERC721, Ownable {
     IAddressStorage public addressStorage;
 
+    uint256 public totalSupply;
     uint256 public lastId = 0;
     mapping(uint256 => uint256) public bottleMinted;
     mapping(uint256 => uint8[]) public attributes;
@@ -39,7 +39,7 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
     mapping(uint256 => string) public imgVersions;
     uint256 public imgVersionCount = 0;
     mapping(uint256 => address) public artists;
-    uint16 public immutable sellerFee = 850;
+    uint16 public immutable sellerFee = 750;
 
     event Rejuvenated(uint256 oldTokenId, uint256 newTokenId);
     event BottleMinted(uint256 tokenId, uint8[] attributes);
@@ -124,6 +124,7 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
     function burn(uint256 tokenId) public {
         require(msg.sender == addressStorage.cellar(), "only cellar");
         _burn(tokenId);
+        totalSupply -= 1;
     }
 
     function bottleAge(uint256 _tokenID) public view returns (uint256) {
@@ -164,7 +165,7 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
         address vineyard = addressStorage.vineyard();
         require(msg.sender == vineyard, "Can only be called by Vineyard");
 
-        uint256 tokenID = totalSupply();
+        uint256 tokenID = totalSupply;
         bottleMinted[tokenID] = block.timestamp;
 
         // TODO: some hooha with vineyard id for attributes
@@ -197,6 +198,7 @@ contract WineBottleV1 is ERC721Enumerable, Ownable {
         ];
         _safeMint(tx.origin, tokenID);
         lastId = tokenID;
+        totalSupply += 1;
 
         emit BottleMinted(tokenID, attributes[tokenID]);
         return tokenID;

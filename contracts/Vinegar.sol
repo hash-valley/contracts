@@ -2,16 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "./IAddressStorage.sol";
 
-contract Vinegar is ERC20, ERC20Permit {
+contract Vinegar is ERC20 {
     IAddressStorage public addressStorage;
 
-    constructor(address _addressStorage)
-        ERC20("Vinegar", "VNG")
-        ERC20Permit("Vinegar")
-    {
+    constructor(address _addressStorage) ERC20("Vinegar", "VNG") {
         addressStorage = IAddressStorage(_addressStorage);
     }
 

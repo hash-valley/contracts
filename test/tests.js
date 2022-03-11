@@ -9,6 +9,7 @@ describe("Hash Valley tests", function () {
   let bottle;
   let cellar;
   let vinegar;
+  let token;
   let storage;
   let provider;
 
@@ -41,11 +42,16 @@ describe("Hash Valley tests", function () {
     vinegar = await Vinegar.deploy(storage.address);
     await vinegar.deployed();
 
+    const Token = await hre.ethers.getContractFactory("GiveawayToken");
+    token = await Token.deploy();
+    await token.deployed();
+
     await storage.setAddresses(
       cellar.address,
       vinegar.address,
       vineyard.address,
-      bottle.address
+      bottle.address,
+      token.address
     );
 
     accounts = await ethers.getSigners();

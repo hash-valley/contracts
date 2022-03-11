@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./UriUtils.sol";
 import "./IAddressStorage.sol";
@@ -15,7 +14,12 @@ interface WineBottle {
     function bottleAge(uint256 _tokenID) external view returns (uint256);
 }
 
-contract VineyardV1 is ERC721Enumerable, Ownable {
+interface GiveawayTokenInterface {
+    function burnOne() external;
+}
+
+contract VineyardV1 is ERC721, Ownable {
+    uint256 public totalSupply;
     uint256 public immutable firstSeasonLength = 3 weeks;
     uint256 public immutable seasonLength = 12 weeks;
     uint256 public immutable maxVineyards = 5500;
@@ -102,19 +106,32 @@ contract VineyardV1 is ERC721Enumerable, Ownable {
     /// @notice mints a new vineyard
     /// @param _tokenAttributes array of attribute ints [location, elevation, elevationIsNegative (0 or 1), soilType]
     function newVineyards(uint16[] calldata _tokenAttributes) public payable {
-        uint256 tokenId = totalSupply();
-        validateAttributes(_tokenAttributes);
+        // first 100 free
+        if (totalSupply >= 100) {
+            require(msg.value >= 0.05 ether, "Value below price");
+        }
+
+        _mintVineyard(_tokenAttributes);
+    }
+
+    function newVineyardGiveaway(uint16[] calldata _tokenAttributes) public {
+        GiveawayTokenInterface(addressStorage.giveawayToken()).burnOne();
+        _mintVineyard(_tokenAttributes);
+    }
+
+    function _mintVineyard(uint16[] calldata _tokenAttributes) internal {
+        uint256 tokenId = totalSupply;
         require(
             tokenId + 1 < maxVineyards,
             "Maximum number of vineyards have been minted"
         );
-        // first 100 free
-        if (tokenId >= 100) {
-            require(msg.value >= 50000000000000000, "Value below price");
-        }
+
+        validateAttributes(_tokenAttributes);
 
         _safeMint(msg.sender, tokenId);
         tokenAttributes[tokenId] = _tokenAttributes;
+        totalSupply += 1;
+
         emit VineyardMinted(
             tokenId,
             _tokenAttributes[0],

@@ -35,11 +35,17 @@ async function deploy() {
   await vinegar.deployed();
   console.log("Vinegar deployed to:", vinegar.address);
 
+  const Give = await hre.ethers.getContractFactory("GiveawayToken")
+  const give = await Give.deploy()
+  await give.deployed()
+  console.log("GiveToken deployed to:", give.address)
+
   await storage.setAddresses(
     cellar.address,
     vinegar.address,
     vineyard.address,
-    bottle.address
+    bottle.address,
+    give.address
   );
 }
 
