@@ -432,6 +432,32 @@ describe("Hash Valley tests", function () {
       const age = await bottle.bottleAge(0);
       expect(age).to.equal(12);
     });
+
+    it("cellar age", async () => {
+      const day = 24 * 60 * 60;
+      const month = 30 * day;
+      const ages = await Promise.all([
+        bottle.cellarAged(15 * day),
+        bottle.cellarAged(5 * month + 1 * day),
+        bottle.cellarAged(11 * month),
+        bottle.cellarAged(11 * month + 1 * day),
+        bottle.cellarAged(11 * month + 29 * day),
+        bottle.cellarAged(11 * month + 30 * day),
+        bottle.cellarAged(11 * month + 31 * day),
+        bottle.cellarAged(11 * month + 67 * day),
+      ]);
+
+      expect(ages.map((x) => x.toString())).to.eql([
+        "1576800000",
+        "51613920000",
+        "126144000000000000",
+        "135604800000000000",
+        "400507200000000000",
+        "409968000000000000",
+        "409968000000000000",
+        "409968000000000000",
+      ]);
+    });
   });
 
   describe("Cellar", function () {
@@ -458,7 +484,7 @@ describe("Hash Valley tests", function () {
       await cellar.stake(0);
       await cellar.stake(1);
       await cellar.stake(2);
-      await ethers.provider.send("evm_increaseTime", [10]);
+      await ethers.provider.send("evm_increaseTime", [999999999999999]);
       await ethers.provider.send("evm_mine", []);
       await cellar.withdraw(0);
       await cellar.withdraw(1);
@@ -475,12 +501,42 @@ describe("Hash Valley tests", function () {
 
       await bottle.rejuvenate(0);
       const newVinegarBalance = await vinegar.balanceOf(accounts[0].address);
-      expect(Number(newVinegarBalance)).to.equal(0);
+      expect(newVinegarBalance.lt(vinegarBalance)).to.equal(true);
 
       const newBottleOwner = await bottle.ownerOf(3);
       expect(newBottleOwner).to.equal(accounts[0].address);
 
       await expect(bottle.rejuvenate(0)).to.be.revertedWith("cannot rejuve");
+    });
+
+    it("spoil chance", async () => {
+      const chances = await Promise.all([
+        cellar.spoilChance(1),
+        cellar.spoilChance(24),
+        cellar.spoilChance(163),
+        cellar.spoilChance(180),
+        cellar.spoilChance(270),
+        cellar.spoilChance(360),
+        cellar.spoilChance(362),
+        cellar.spoilChance(364),
+        cellar.spoilChance(365),
+        cellar.spoilChance(366),
+        cellar.spoilChance(370),
+      ]);
+
+      expect(chances.map((x) => x.toString())).to.eql([
+        "8600",
+        "6900",
+        "3000",
+        "2100",
+        "900",
+        "500",
+        "500",
+        "500",
+        "500",
+        "500",
+        "500",
+      ]);
     });
   });
 });

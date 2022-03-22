@@ -100,6 +100,7 @@ contract VineyardV1 is ERC721, Ownable {
         if (_tokenAttributes[2] == 1)
             require(mintReqs[_tokenAttributes[0]][2] == 1, "3rd cant be 1");
         require(_tokenAttributes[3] <= 5, "Invalid 4th param");
+        return true;
     }
 
     // SALE

@@ -49,6 +49,10 @@ contract WineBottleV1 is ERC721, Ownable {
     uint8[4][] internal wineNotes;
     uint8[][][] internal wineTypes;
 
+    uint256 internal constant year = 365 days;
+    uint256 internal constant maxAge = 13000000000 * year;
+    uint256[] internal eraBounds;
+
     // CONSTRUCTOR
     constructor(
         string memory _baseUri,
@@ -118,6 +122,23 @@ contract WineBottleV1 is ERC721, Ownable {
         wineTypes[3].push(new uint8[](2));
         wineTypes[3][2].push(3);
         wineTypes[3][2].push(3);
+
+        eraBounds = [
+            0,
+            100 * year,
+            250 * year,
+            500 * year,
+            800 * year,
+            1600 * year,
+            2700 * year,
+            4000 * year,
+            10000 * year,
+            100000 * year,
+            1000000000 * year,
+            4000000000 * year,
+            13000000000 * year,
+            13000000001 * year
+        ];
     }
 
     // PUBLIC FUNCTIONS
@@ -127,14 +148,40 @@ contract WineBottleV1 is ERC721, Ownable {
         totalSupply -= 1;
     }
 
+    function cellarAged(uint256 cellarTime) public view returns (uint256) {
+        if (cellarTime <= 360 days) {
+            uint256 months = cellarTime / 30 days;
+            uint256 monthTime = cellarTime - (months * 30 days);
+            uint256 eraTime = eraBounds[months + 1] - eraBounds[months];
+            uint256 monthFraction = (monthTime * eraTime) / (30 days);
+            return eraBounds[months] + monthFraction;
+        }
+        return eraBounds[12];
+    }
+
     function bottleAge(uint256 _tokenID) public view returns (uint256) {
         uint256 cellarTime = CellarContract(addressStorage.cellar()).cellarTime(
             _tokenID
         );
-        // TODO: formula for finding how aged it gets
-        uint256 cellarAged = cellarTime * cellarTime;
+        return
+            block.timestamp - bottleMinted[_tokenID] + cellarAged(cellarTime);
+    }
 
-        return block.timestamp - bottleMinted[_tokenID] + cellarAged;
+    function bottleEra(uint256 _tokenID) public view returns (string memory) {
+        uint256 age = bottleAge(_tokenID);
+        if (age < eraBounds[1]) return "Contemporary";
+        else if (age < eraBounds[2]) return "Modern";
+        else if (age < eraBounds[3]) return "Romantic";
+        else if (age < eraBounds[4]) return "Renaissance";
+        else if (age < eraBounds[5]) return "Medeival";
+        else if (age < eraBounds[6]) return "Classical";
+        else if (age < eraBounds[7]) return "Ancient";
+        else if (age < eraBounds[8]) return "Neolithic";
+        else if (age < eraBounds[9]) return "Prehistoric";
+        else if (age < eraBounds[10]) return "Primordial";
+        else if (age < eraBounds[11]) return "Archean";
+        else if (age < eraBounds[12]) return "Astral";
+        else return "Akashic";
     }
 
     function rejuvenate(uint256 _oldTokenId) public returns (uint256) {
@@ -143,7 +190,7 @@ contract WineBottleV1 is ERC721, Ownable {
         uint256 cellarTime = CellarContract(cellar).cellarTime(_oldTokenId);
         IVinegar(addressStorage.vinegar()).burn(
             msg.sender,
-            (3 * cellarTime) * 1e18
+            (3 * cellarAged(cellarTime)) * 1e18
         );
 
         uint256 tokenId = lastId + 1;

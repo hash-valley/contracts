@@ -23,6 +23,10 @@ interface VinegarContract {
     function spoilReward(address recipient, uint256 amount) external;
 }
 
+interface WineBottle {
+    function cellarAged(uint256 cellarTime) external view returns (uint256);
+}
+
 contract CellarV1 {
     IAddressStorage public addressStorage;
 
@@ -61,27 +65,48 @@ contract CellarV1 {
         emit Staked(_tokenID);
     }
 
+    function spoilChance(uint256 stakedDays)
+        public
+        pure
+        returns (uint256 chance)
+    {
+        if (stakedDays < 360) {
+            chance = 100 * (5 + ((365 - stakedDays) / 38)**2);
+        } else {
+            chance = 500;
+        }
+    }
+
     function withdraw(uint256 _tokenID) public {
         require(staked[_tokenID] != 0, "Id not staked");
         require(owner[_tokenID] == msg.sender, "Id not owned");
 
         address wineBottle = addressStorage.bottle();
         withdrawn[_tokenID] = block.timestamp;
-        // TODO: does it spoil?
-        if (true) {
-            VinegarContract(addressStorage.vinegar()).spoilReward(
-                msg.sender,
-                cellarTime(_tokenID)
-            );
-            IERC721(wineBottle).burn(_tokenID);
-            emit Spoiled(_tokenID);
-        } else {
+
+        // probability of spoiling
+        uint256 rand = random(
+            string(abi.encodePacked(block.timestamp, _tokenID))
+        ) % 10000; // TODO: better rand num?
+        uint256 stakedDays = (withdrawn[_tokenID] - staked[_tokenID]) /
+            (1 days);
+
+        if (rand < spoilChance(stakedDays)) {
             IERC721(wineBottle).safeTransferFrom(
                 address(this),
                 msg.sender,
                 _tokenID
             );
             emit Withdrawn(_tokenID, withdrawn[_tokenID] - staked[_tokenID]);
+        } else {
+            VinegarContract(addressStorage.vinegar()).spoilReward(
+                msg.sender,
+                WineBottle(addressStorage.bottle()).cellarAged(
+                    cellarTime(_tokenID)
+                ) * 1e18
+            );
+            IERC721(wineBottle).burn(_tokenID);
+            emit Spoiled(_tokenID);
         }
     }
 
@@ -90,10 +115,14 @@ contract CellarV1 {
         address,
         uint256,
         bytes calldata
-    ) external returns (bytes4) {
+    ) external pure returns (bytes4) {
         return
             bytes4(
                 keccak256("onERC721Received(address,address,uint256,bytes)")
             );
+    }
+
+    function random(string memory input) internal pure returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(input)));
     }
 }

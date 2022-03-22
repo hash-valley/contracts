@@ -30,7 +30,7 @@ async function start() {
   let time = Number(await vineyard.minWaterTime(0));
   for (let i = 0; i <= days; i++) {
     await ethers.provider.send("evm_increaseTime", [time]);
-    await vineyard.connect(accounts[2]).waterMultiple([0]);
+    await vineyard.connect(accounts[2]).waterMultiple([0, 1]);
   }
 }
 
