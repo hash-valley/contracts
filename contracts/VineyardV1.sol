@@ -7,7 +7,9 @@ import "./UriUtils.sol";
 import "./IAddressStorage.sol";
 
 interface WineBottle {
-    function newBottle(uint256 _vineyard) external returns (uint256);
+    function newBottle(uint256 _vineyard, address _owner)
+        external
+        returns (uint256);
 
     function ownerOf(uint256 tokenId) external view returns (address);
 
@@ -200,7 +202,10 @@ contract VineyardV1 is ERC721, Ownable {
         xp[_tokenId] += 100 * streak[_tokenId];
 
         address wineBottle = addressStorage.bottle();
-        uint256 bottleId = WineBottle(wineBottle).newBottle(_tokenId);
+        uint256 bottleId = WineBottle(wineBottle).newBottle(
+            _tokenId,
+            ownerOf(_tokenId)
+        );
         emit Harvested(_tokenId, season, bottleId);
     }
 
@@ -392,13 +397,13 @@ contract VineyardV1 is ERC721, Ownable {
     }
 
     // UPDATING
-    uint256 startTimestamp;
-    mapping(uint256 => uint256) voted;
-    uint256 forVotes;
-    uint256 againstVotes;
-    string newUri;
-    address artist;
-    bool settled = true;
+    uint256 public startTimestamp;
+    mapping(uint256 => uint256) public voted;
+    uint256 public forVotes;
+    uint256 public againstVotes;
+    string public newUri;
+    address public artist;
+    bool public settled = true;
 
     event Suggest(
         uint256 startTimestamp,

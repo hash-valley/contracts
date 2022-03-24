@@ -539,4 +539,350 @@ describe("Hash Valley tests", function () {
       ]);
     });
   });
+
+  describe.only("Council", function () {
+    beforeEach(async () => {
+      await deploy();
+      await vineyard.newVineyards([12, 13, 0, 4]);
+      await vineyard.newVineyards([12, 13, 0, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
+      await vineyard.connect(accounts[2]).newVineyards([12, 13, 0, 4]);
+      await vineyard.start();
+      await vineyard.plantMultiple([0, 1, 2, 3]);
+
+      let time = Number(await vineyard.minWaterTime(0));
+      for (let i = 0; i <= 18; i++) {
+        await ethers.provider.send("evm_increaseTime", [time]);
+        await vineyard.waterMultiple([0, 1, 2, 3]);
+      }
+
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await vineyard.harvestMultiple([0, 1, 2, 3]);
+      await ethers.provider.send("evm_increaseTime", [10]);
+      await ethers.provider.send("evm_mine", []);
+    });
+
+    it("suggest proposal (vine)", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+      const age = await bottle.bottleAge(0);
+      const tx = await vineyard.suggest(0, newCid, newAddress);
+
+      expect(await vineyard.artist()).to.equal(newAddress);
+      expect(await vineyard.newUri()).to.equal(newCid);
+      expect(tx)
+        .to.emit(vineyard, "Suggest")
+        .withArgs(
+          await vineyard.startTimestamp(),
+          newCid,
+          newAddress,
+          0,
+          age.add(ethers.BigNumber.from(1))
+        );
+    });
+
+    it("suggest proposal (bottle)", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+      const age = await bottle.bottleAge(0);
+      const tx = await bottle.suggest(0, newCid, newAddress);
+
+      expect(await bottle.artist()).to.equal(newAddress);
+      expect(await bottle.newUri()).to.equal(newCid);
+      expect(tx)
+        .to.emit(bottle, "Suggest")
+        .withArgs(
+          await bottle.startTimestamp(),
+          newCid,
+          newAddress,
+          0,
+          age.add(ethers.BigNumber.from(1))
+        );
+    });
+
+    it("have to use owned bottle to suggest", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+
+      await expect(vineyard.suggest(2, newCid, newAddress)).to.be.revertedWith(
+        "Bottle not owned"
+      );
+      await expect(bottle.suggest(2, newCid, newAddress)).to.be.revertedWith(
+        "Bottle not owned"
+      );
+    });
+
+    it("only open 36 hours for voting", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+      await vineyard.suggest(0, newCid, newAddress);
+
+      await ethers.provider.send("evm_increaseTime", [36 * 60 * 60]);
+      await ethers.provider.send("evm_mine", []);
+
+      await expect(vineyard.support(2)).to.be.revertedWith("Bottle not owned");
+      await expect(vineyard.support(1)).to.be.revertedWith("No queue");
+
+      await expect(vineyard.retort(2)).to.be.revertedWith("Bottle not owned");
+      await expect(vineyard.retort(1)).to.be.revertedWith("No queue");
+
+      // bottle
+      await bottle.suggest(0, newCid, newAddress);
+
+      await ethers.provider.send("evm_increaseTime", [36 * 60 * 60]);
+      await ethers.provider.send("evm_mine", []);
+
+      await expect(bottle.support(2)).to.be.revertedWith("Bottle not owned");
+      await expect(bottle.support(1)).to.be.revertedWith("No queue");
+
+      await expect(bottle.retort(2)).to.be.revertedWith("Bottle not owned");
+      await expect(bottle.retort(1)).to.be.revertedWith("No queue");
+    });
+
+    it("can re-suggest if not settled within 12 hours of passing", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+      await vineyard.suggest(0, newCid, newAddress);
+
+      await ethers.provider.send("evm_increaseTime", [48 * 60 * 60 + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      let age = await bottle.bottleAge(0);
+      let tx = await vineyard.suggest(0, newCid, newAddress);
+      expect(tx)
+        .to.emit(vineyard, "Suggest")
+        .withArgs(
+          await vineyard.startTimestamp(),
+          newCid,
+          newAddress,
+          0,
+          age.add(ethers.BigNumber.from(1))
+        );
+
+      // bottle
+      await bottle.suggest(0, newCid, newAddress);
+
+      await ethers.provider.send("evm_increaseTime", [48 * 60 * 60 + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      age = await bottle.bottleAge(0);
+      tx = await bottle.suggest(0, newCid, newAddress);
+      expect(tx)
+        .to.emit(bottle, "Suggest")
+        .withArgs(
+          await bottle.startTimestamp(),
+          newCid,
+          newAddress,
+          0,
+          age.add(ethers.BigNumber.from(1))
+        );
+    });
+
+    it("can re-suggest if failed and 36 hours passed", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+      await vineyard.suggest(0, newCid, newAddress);
+      await ethers.provider.send("evm_increaseTime", [1 * 60 * 60]);
+      await ethers.provider.send("evm_mine", []);
+      await vineyard.connect(accounts[1]).retort(2);
+
+      await ethers.provider.send("evm_increaseTime", [35 * 60 * 60 + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      let age = await bottle.bottleAge(0);
+      let tx = await vineyard.suggest(0, newCid, newAddress);
+      expect(tx)
+        .to.emit(vineyard, "Suggest")
+        .withArgs(
+          await vineyard.startTimestamp(),
+          newCid,
+          newAddress,
+          0,
+          age.add(ethers.BigNumber.from(1))
+        );
+
+      // bottle
+      await bottle.suggest(0, newCid, newAddress);
+      await ethers.provider.send("evm_increaseTime", [1 * 60 * 60]);
+      await ethers.provider.send("evm_mine", []);
+      await bottle.connect(accounts[1]).retort(2);
+
+      await ethers.provider.send("evm_increaseTime", [35 * 60 * 60 + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      age = await bottle.bottleAge(0);
+      tx = await bottle.suggest(0, newCid, newAddress);
+      expect(tx)
+        .to.emit(bottle, "Suggest")
+        .withArgs(
+          await bottle.startTimestamp(),
+          newCid,
+          newAddress,
+          0,
+          age.add(ethers.BigNumber.from(1))
+        );
+    });
+
+    it("can support", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+      await vineyard.suggest(0, newCid, newAddress);
+      let tx = await vineyard.support(1);
+
+      expect(tx)
+        .to.emit(vineyard, "Support")
+        .withArgs(
+          await vineyard.startTimestamp(),
+          1,
+          await vineyard.forVotes()
+        );
+
+      // bottle
+      await bottle.suggest(0, newCid, newAddress);
+      tx = await bottle.support(1);
+
+      expect(tx)
+        .to.emit(bottle, "Support")
+        .withArgs(await bottle.startTimestamp(), 1, await bottle.forVotes());
+    });
+
+    it("can't double support", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+      await vineyard.suggest(0, newCid, newAddress);
+      await vineyard.support(1);
+      await expect(vineyard.support(1)).to.be.revertedWith("Double vote");
+
+      // bottle
+      await bottle.suggest(0, newCid, newAddress);
+      await bottle.support(1);
+      await expect(bottle.support(1)).to.be.revertedWith("Double vote");
+    });
+
+    it("can retort", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+      await vineyard.suggest(0, newCid, newAddress);
+      let tx = await vineyard.retort(1);
+
+      expect(tx)
+        .to.emit(vineyard, "Retort")
+        .withArgs(
+          await vineyard.startTimestamp(),
+          1,
+          await vineyard.againstVotes()
+        );
+
+      // bottle
+      await bottle.suggest(0, newCid, newAddress);
+      tx = await bottle.retort(1);
+
+      expect(tx)
+        .to.emit(bottle, "Retort")
+        .withArgs(
+          await bottle.startTimestamp(),
+          1,
+          await bottle.againstVotes()
+        );
+    });
+
+    it("can't double retort", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+      await vineyard.suggest(0, newCid, newAddress);
+      await vineyard.retort(1);
+      await expect(vineyard.retort(1)).to.be.revertedWith("Double vote");
+
+      // bottle
+      await bottle.suggest(0, newCid, newAddress);
+      await bottle.retort(1);
+      await expect(bottle.retort(1)).to.be.revertedWith("Double vote");
+    });
+
+    it("can complete if passes", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+      await vineyard.suggest(0, newCid, newAddress);
+
+      await ethers.provider.send("evm_increaseTime", [36 * 60 * 60 + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      let tx = await vineyard.complete();
+      expect(tx)
+        .to.emit(vineyard, "Complete")
+        .withArgs(await vineyard.startTimestamp());
+      expect(await vineyard.artists(1)).to.equal(newAddress);
+      expect((await vineyard.imgVersionCount()).toString()).to.equal("2");
+      expect(await vineyard.imgVersions(1)).to.equal(newCid);
+
+      // bottle
+      await bottle.suggest(0, newCid, newAddress);
+
+      await ethers.provider.send("evm_increaseTime", [36 * 60 * 60 + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      tx = await bottle.complete();
+      expect(tx)
+        .to.emit(bottle, "Complete")
+        .withArgs(await bottle.startTimestamp());
+      expect(await bottle.artists(1)).to.equal(newAddress);
+      expect((await bottle.imgVersionCount()).toString()).to.equal("2");
+      expect(await bottle.imgVersions(1)).to.equal(newCid);
+    });
+
+    it("9 day total cooldown if passed and settled", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+      await vineyard.suggest(0, newCid, newAddress);
+
+      await ethers.provider.send("evm_increaseTime", [36 * 60 * 60 + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      await vineyard.complete();
+      await expect(vineyard.suggest(0, newCid, newAddress)).to.be.revertedWith(
+        "Too soon"
+      );
+
+      await ethers.provider.send("evm_increaseTime", [180 * 60 * 60 + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      let age = await bottle.bottleAge(0);
+      let tx = await vineyard.suggest(0, newCid, newAddress);
+      expect(tx)
+        .to.emit(vineyard, "Suggest")
+        .withArgs(
+          await vineyard.startTimestamp(),
+          newCid,
+          newAddress,
+          0,
+          age.add(ethers.BigNumber.from(1))
+        );
+
+      // bottle
+      await bottle.suggest(0, newCid, newAddress);
+
+      await ethers.provider.send("evm_increaseTime", [36 * 60 * 60 + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      await bottle.complete();
+      await expect(bottle.suggest(0, newCid, newAddress)).to.be.revertedWith(
+        "Too soon"
+      );
+
+      await ethers.provider.send("evm_increaseTime", [180 * 60 * 60 + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      age = await bottle.bottleAge(0);
+      tx = await bottle.suggest(0, newCid, newAddress);
+      expect(tx)
+        .to.emit(bottle, "Suggest")
+        .withArgs(
+          await bottle.startTimestamp(),
+          newCid,
+          newAddress,
+          0,
+          age.add(ethers.BigNumber.from(1))
+        );
+    });
+  });
 });

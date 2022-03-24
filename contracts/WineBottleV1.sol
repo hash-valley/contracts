@@ -208,14 +208,17 @@ contract WineBottleV1 is ERC721, Ownable {
         return uint256(keccak256(abi.encodePacked(input)));
     }
 
-    function newBottle(uint256 _vineyard) external returns (uint256) {
+    function newBottle(uint256 _vineyard, address _owner)
+        external
+        returns (uint256)
+    {
         address vineyard = addressStorage.vineyard();
         require(msg.sender == vineyard, "Can only be called by Vineyard");
 
         uint256 tokenID = totalSupply;
         bottleMinted[tokenID] = block.timestamp;
 
-        // TODO: some hooha with vineyard id for attributes
+        // TODO: some hooha with vineyard for attributes
         uint16[] memory vinParams = Vineyard(vineyard).getTokenAttributes(
             _vineyard
         );
@@ -243,7 +246,7 @@ contract WineBottleV1 is ERC721, Ownable {
             uint8(bottleNote),
             uint8(bottleType)
         ];
-        _safeMint(tx.origin, tokenID);
+        _safeMint(_owner, tokenID);
         lastId = tokenID;
         totalSupply += 1;
 
@@ -335,13 +338,13 @@ contract WineBottleV1 is ERC721, Ownable {
     }
 
     // UPDATING
-    uint256 startTimestamp;
-    mapping(uint256 => uint256) voted;
-    uint256 forVotes;
-    uint256 againstVotes;
-    string newUri;
-    address artist;
-    bool settled = true;
+    uint256 public startTimestamp;
+    mapping(uint256 => uint256) public voted;
+    uint256 public forVotes;
+    uint256 public againstVotes;
+    string public newUri;
+    address public artist;
+    bool public settled = true;
 
     event Suggest(
         uint256 startTimestamp,
