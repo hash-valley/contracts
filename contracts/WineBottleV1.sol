@@ -122,12 +122,14 @@ contract WineBottleV1 is ERC721, Ownable, VotableUri {
     }
 
     // PUBLIC FUNCTIONS
+    /// @notice burns a wine bottle token
     function burn(uint256 tokenId) public {
         require(msg.sender == addressStorage.cellar(), "only cellar");
         _burn(tokenId);
         totalSupply -= 1;
     }
 
+    /// @notice gets surplus age generated from cellar based on real time in cellar
     function cellarAged(uint256 cellarTime) public view returns (uint256) {
         if (cellarTime <= 360 days) {
             uint256 months = cellarTime / 30 days;
@@ -139,6 +141,7 @@ contract WineBottleV1 is ERC721, Ownable, VotableUri {
         return eraBounds[12];
     }
 
+    /// @notice calculates total age of bottle based on real time and cellar time
     function bottleAge(uint256 _tokenID) public view returns (uint256) {
         uint256 cellarTime = ICellar(addressStorage.cellar()).cellarTime(
             _tokenID
@@ -147,6 +150,7 @@ contract WineBottleV1 is ERC721, Ownable, VotableUri {
             block.timestamp - bottleMinted[_tokenID] + cellarAged(cellarTime);
     }
 
+    /// @notice gets era of bottle based on age
     function bottleEra(uint256 _tokenID) public view returns (string memory) {
         uint256 age = bottleAge(_tokenID);
         if (age < eraBounds[1]) return "Contemporary";
@@ -164,6 +168,7 @@ contract WineBottleV1 is ERC721, Ownable, VotableUri {
         else return "Akashic";
     }
 
+    /// @notice revives a spoiled bottle
     function rejuvenate(uint256 _oldTokenId) public returns (uint256) {
         require(attributes[_oldTokenId].length > 0, "cannot rejuve");
         address cellar = addressStorage.cellar();
@@ -183,11 +188,12 @@ contract WineBottleV1 is ERC721, Ownable, VotableUri {
     }
 
     // MINTING FUNCTIONS
-
+    /// @notice creates a random number
     function random(string memory input) internal pure returns (uint256) {
         return uint256(keccak256(abi.encodePacked(input)));
     }
 
+    /// @notice mints a new bottle with generated attributes
     function newBottle(uint256 _vineyard, address _owner)
         external
         returns (uint256)
@@ -239,6 +245,7 @@ contract WineBottleV1 is ERC721, Ownable, VotableUri {
         baseUri = _baseUri;
     }
 
+    /// @notice returns metadata string for latest uri, royalty recipient settings
     function tokenURI(uint256 tokenId)
         public
         view
@@ -248,6 +255,7 @@ contract WineBottleV1 is ERC721, Ownable, VotableUri {
         return bottleMetadata(tokenId, imgVersionCount - 1);
     }
 
+    /// @notice returns metadata string for current or historical versions
     function bottleMetadata(uint256 _tokenId, uint256 _version)
         public
         view

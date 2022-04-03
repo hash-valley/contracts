@@ -60,6 +60,7 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
         }
     }
 
+    /// @notice validates minting attributes
     function validateAttributes(uint16[] calldata _tokenAttributes)
         public
         view
@@ -95,11 +96,13 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
         _mintVineyard(_tokenAttributes);
     }
 
+    /// @notice mints a new vineyard for free by burning a giveaway token
     function newVineyardGiveaway(uint16[] calldata _tokenAttributes) public {
         IGiveawayToken(addressStorage.giveawayToken()).burnOne();
         _mintVineyard(_tokenAttributes);
     }
 
+    /// @notice internal vineyard minting function
     function _mintVineyard(uint16[] calldata _tokenAttributes) internal {
         uint256 tokenId = totalSupply;
         require(
@@ -122,6 +125,7 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
         );
     }
 
+    /// @notice returns token attributes array
     function getTokenAttributes(uint256 _tokenId)
         public
         view
@@ -131,17 +135,20 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
     }
 
     // LOGISTICS
+    /// @notice marks game as started triggering the first planting season to begin
     function start() public onlyOwner {
         require(gameStart == 0, "Game already started");
         gameStart = block.timestamp;
         emit Start(uint48(block.timestamp));
     }
 
+    /// @notice withdraws sale proceeds
     function withdrawAll() public payable onlyOwner {
         require(payable(_msgSender()).send(address(this).balance));
     }
 
     // GAME
+    /// @notice returns current season number
     function currSeason() public view returns (uint256) {
         if (gameStart == 0) return 0;
         uint256 gameTime = block.timestamp - gameStart;
@@ -149,6 +156,7 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
         return (gameTime - firstSeasonLength) / seasonLength + 2;
     }
 
+    /// @notice plants the selected vineyard
     function plant(uint256 _tokenId) public {
         require(plantingTime(), "Not planting time");
         uint256 season = currSeason();
@@ -158,12 +166,14 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
         emit Planted(_tokenId, planted[_tokenId]);
     }
 
+    /// @notice plant multiple vineyards in one tx
     function plantMultiple(uint256[] calldata _tokenIds) public {
         for (uint8 i = 0; i < _tokenIds.length; i++) {
             plant(_tokenIds[i]);
         }
     }
 
+    /// @notice harvests the selected vineyard
     function harvest(uint256 _tokenId) public {
         require(harvestTime(), "Not harvest time");
         uint256 season = currSeason();
@@ -187,33 +197,39 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
         emit Harvested(_tokenId, season, bottleId);
     }
 
+    /// @notice harvest multiple vineyards in one tx
     function harvestMultiple(uint256[] calldata _tokenIds) public {
         for (uint8 i = 0; i < _tokenIds.length; i++) {
             harvest(_tokenIds[i]);
         }
     }
 
+    /// @notice waters the selected vineyard
     function water(uint256 _tokenId) public {
         require(canWater(_tokenId), "Vineyard can't be watered");
         watered[_tokenId] = block.timestamp;
     }
 
+    /// @notice water multiple vineyards in one tx
     function waterMultiple(uint256[] calldata _tokenIds) public {
         for (uint8 i = 0; i < _tokenIds.length; i++) {
             water(_tokenIds[i]);
         }
     }
 
+    /// @notice min time before watering window opens
     function minWaterTime(uint256 _tokenId) public view returns (uint256) {
         // TODO: some hooha with vineyard stats for time
         return 24 hours;
     }
 
+    /// @notice window of time to water in
     function waterWindow(uint256 _tokenId) public view returns (uint256) {
         // TODO: some hooha with vineyard stats for time
         return 24 hours;
     }
 
+    /// @notice checks if vineyard is alive (planted and watered)
     function vineyardAlive(uint256 _tokenId) public view returns (bool) {
         if (planted[_tokenId] == currSeason()) {
             if (
@@ -230,6 +246,7 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
     }
 
     // VIEWS
+    /// @notice current harvest streak for vineyard
     function currentStreak(uint256 _tokenId) public view returns (uint16) {
         uint256 season = currSeason();
         if (season == 0) return 0;
@@ -239,6 +256,7 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
         return 0;
     }
 
+    /// @notice checks if vineyard can be watered
     function canWater(uint256 _tokenId) public view returns (bool) {
         uint256 _canWater = watered[_tokenId] + minWaterTime(_tokenId);
         return
@@ -246,6 +264,7 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
             _canWater + waterWindow(_tokenId) >= block.timestamp;
     }
 
+    /// @notice checks if its planting season
     function plantingTime() public view returns (bool) {
         if (gameStart == 0) return false;
         uint256 season = currSeason();
@@ -263,10 +282,12 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
             block.timestamp >= plantingBegins;
     }
 
+    /// @notice checks if vineyard can be planted
     function canPlant(uint256 _tokenId) public view returns (bool) {
         return plantingTime() && planted[_tokenId] != currSeason();
     }
 
+    /// @notice checks if it is harvesting season
     function harvestTime() public view returns (bool) {
         if (gameStart == 0) return false;
         uint256 season = currSeason();
@@ -283,6 +304,7 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
             harvestEnds >= block.timestamp && block.timestamp >= harvestBegins;
     }
 
+    /// @notice checks if vineyard can be harvested
     function canHarvest(uint256 _tokenId) public view returns (bool) {
         return
             harvestTime() &&
@@ -295,6 +317,7 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
         baseUri = _baseUri;
     }
 
+    /// @notice returns metadata string for latest uri, royalty recipient settings
     function tokenURI(uint256 tokenId)
         public
         view
@@ -304,6 +327,7 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
         return vineMetadata(tokenId, imgVersionCount - 1);
     }
 
+    /// @notice returns metadata string for current or historical versions
     function vineMetadata(uint256 _tokenId, uint256 _version)
         public
         view

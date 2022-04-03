@@ -8,6 +8,7 @@ contract GiveawayToken is ERC20 {
         _mint(msg.sender, 100e18);
     }
 
+    /// @notice burns one token after it has been spent
     function burnOne() external {
         _burn(tx.origin, 1e18);
     }

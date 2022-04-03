@@ -29,6 +29,7 @@ contract VotableUri {
     event Retort(uint256 startTimestamp, uint256 bottle, uint256 againstVotes);
     event Complete(uint256 startTimestamp, string newUri, address artist);
 
+    // CONSTRUCTOR
     constructor(address _bottle, string memory _imgUri) {
         bottle = IWineBottle(_bottle);
 
@@ -37,6 +38,11 @@ contract VotableUri {
         imgVersionCount += 1;
     }
 
+    // PUBLIC FUNCTIONS
+    /// @notice suggest a new uri and royalties recipient
+    /// @param _tokenId bottle token id to vote with
+    /// @param _newUri new uri, preferably ipfs/arweave
+    /// @param _artist secondary market royalties recipient
     function suggest(
         uint256 _tokenId,
         string calldata _newUri,
@@ -65,6 +71,8 @@ contract VotableUri {
         emit Suggest(startTimestamp, _newUri, _artist, _tokenId, forVotes);
     }
 
+    /// @notice vote for the current suggestion
+    /// @param _tokenId bottle to vote with
     function support(uint256 _tokenId) public {
         require(bottle.ownerOf(_tokenId) == msg.sender, "Bottle not owned");
         require(voted[_tokenId] + 36 hours < block.timestamp, "Double vote");
@@ -75,6 +83,8 @@ contract VotableUri {
         emit Support(startTimestamp, _tokenId, forVotes);
     }
 
+    /// @notice vote against current suggestion
+    /// @param _tokenId bottle to vote with
     function retort(uint256 _tokenId) public {
         require(bottle.ownerOf(_tokenId) == msg.sender, "Bottle not owned");
         require(voted[_tokenId] + 36 hours < block.timestamp, "Double vote");
@@ -85,6 +95,7 @@ contract VotableUri {
         emit Retort(startTimestamp, _tokenId, againstVotes);
     }
 
+    /// @notice writes suggested address and uri to contract mapping
     function complete() public {
         require(forVotes > againstVotes, "Blocked");
         require(startTimestamp + 36 hours < block.timestamp, "Too soon");

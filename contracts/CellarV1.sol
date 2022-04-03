@@ -39,11 +39,13 @@ contract CellarV1 {
     event Withdrawn(uint256 tokenId, uint256 cellarTime);
     event Spoiled(uint256 tokenId);
 
-    // FUNCTIONS
+    // CONSTRUCTOR
     constructor(address _addressStorage) {
         addressStorage = IAddressStorage(_addressStorage);
     }
 
+    // FUNCTIONS
+    /// @notice returns time spent in cellar
     function cellarTime(uint256 _tokenID) public view returns (uint256) {
         if (withdrawn[_tokenID] == 0 && staked[_tokenID] != 0) {
             // currently in cellar
@@ -52,6 +54,7 @@ contract CellarV1 {
         return withdrawn[_tokenID] - staked[_tokenID];
     }
 
+    /// @notice stakes bottle in contract
     function stake(uint256 _tokenID) public {
         require(staked[_tokenID] == 0, "Id already staked");
         address wineBottle = addressStorage.bottle();
@@ -65,6 +68,7 @@ contract CellarV1 {
         emit Staked(_tokenID);
     }
 
+    /// @notice calculates chance that bottle spoils
     function spoilChance(uint256 stakedDays)
         public
         pure
@@ -77,6 +81,7 @@ contract CellarV1 {
         }
     }
 
+    /// @notice unstakes bottle from contract
     function withdraw(uint256 _tokenID) public {
         require(staked[_tokenID] != 0, "Id not staked");
         require(owner[_tokenID] == msg.sender, "Id not owned");

@@ -22,6 +22,7 @@ contract AddressStorage is IAddressStorage {
     }
 
     // PUBLIC FUNCTIONS
+    /// @notice sets addresses for ecosystem
     function setAddresses(
         address _cellar,
         address _vinegar,
