@@ -13,12 +13,15 @@ contract AddressStorage is IAddressStorage {
     bool private addressesSet = false;
     address private deployer;
 
+    // EVENTS
     event AddressesSet();
 
+    // CONSTRUCTOR
     constructor() {
         deployer = msg.sender;
     }
 
+    // PUBLIC FUNCTIONS
     function setAddresses(
         address _cellar,
         address _vinegar,

@@ -18,15 +18,6 @@ describe("Hash Valley tests", function () {
     storage = await Storage.deploy();
     await storage.deployed();
 
-    const Vineyard = await hre.ethers.getContractFactory("VineyardV1");
-    vineyard = await Vineyard.deploy(
-      config.vine_base_uri,
-      config.vine_img_uri,
-      storage.address,
-      config.mintReqs
-    );
-    await vineyard.deployed();
-
     const Cellar = await hre.ethers.getContractFactory("CellarV1");
     cellar = await Cellar.deploy(storage.address);
     await cellar.deployed();
@@ -39,6 +30,16 @@ describe("Hash Valley tests", function () {
       config.eraBounds
     );
     await bottle.deployed();
+
+    const Vineyard = await hre.ethers.getContractFactory("VineyardV1");
+    vineyard = await Vineyard.deploy(
+      config.vine_base_uri,
+      config.vine_img_uri,
+      storage.address,
+      config.mintReqs,
+      bottle.address
+    );
+    await vineyard.deployed();
 
     const Vinegar = await hre.ethers.getContractFactory("Vinegar");
     vinegar = await Vinegar.deploy(storage.address);
@@ -812,7 +813,7 @@ describe("Hash Valley tests", function () {
       let tx = await vineyard.complete();
       expect(tx)
         .to.emit(vineyard, "Complete")
-        .withArgs(await vineyard.startTimestamp());
+        .withArgs(await vineyard.startTimestamp(), newCid, newAddress);
       expect(await vineyard.artists(1)).to.equal(newAddress);
       expect((await vineyard.imgVersionCount()).toString()).to.equal("2");
       expect(await vineyard.imgVersions(1)).to.equal(newCid);
@@ -826,7 +827,7 @@ describe("Hash Valley tests", function () {
       tx = await bottle.complete();
       expect(tx)
         .to.emit(bottle, "Complete")
-        .withArgs(await bottle.startTimestamp());
+        .withArgs(await bottle.startTimestamp(), newCid, newAddress);
       expect(await bottle.artists(1)).to.equal(newAddress);
       expect((await bottle.imgVersionCount()).toString()).to.equal("2");
       expect(await bottle.imgVersions(1)).to.equal(newCid);

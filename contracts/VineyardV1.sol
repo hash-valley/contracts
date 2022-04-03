@@ -3,24 +3,16 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./UriUtils.sol";
 import "./IAddressStorage.sol";
+import "./IWineBottle.sol";
+import "./UriUtils.sol";
+import "./VotableUri.sol";
 
-interface WineBottle {
-    function newBottle(uint256 _vineyard, address _owner)
-        external
-        returns (uint256);
-
-    function ownerOf(uint256 tokenId) external view returns (address);
-
-    function bottleAge(uint256 _tokenID) external view returns (uint256);
-}
-
-interface GiveawayTokenInterface {
+interface IGiveawayToken {
     function burnOne() external;
 }
 
-contract VineyardV1 is ERC721, Ownable {
+contract VineyardV1 is ERC721, Ownable, VotableUri {
     uint256 public totalSupply;
     uint256 public immutable firstSeasonLength = 3 weeks;
     uint256 public immutable seasonLength = 12 weeks;
@@ -36,13 +28,11 @@ contract VineyardV1 is ERC721, Ownable {
     mapping(uint256 => uint256) public lastHarvested;
 
     string public baseUri;
-    mapping(uint256 => string) public imgVersions;
-    uint256 public imgVersionCount = 0;
-    mapping(uint256 => address) public artists;
     uint16 public immutable sellerFee = 750;
 
     uint16[3][15] internal mintReqs;
 
+    // EVENTS
     event VineyardMinted(
         uint256 tokenId,
         uint256 location,
@@ -59,15 +49,16 @@ contract VineyardV1 is ERC721, Ownable {
         string memory _baseUri,
         string memory _imgUri,
         address _addressStorage,
-        uint16[3][15] memory _mintReqs
-    ) ERC721("Hash Valley Vineyard", "VNYD") {
+        uint16[3][15] memory _mintReqs,
+        address _bottle
+    )
+        ERC721("Hash Valley Vineyard", "VNYD")
+        VotableUri(_bottle, _imgUri)
+    {
         setBaseURI(_baseUri);
-        imgVersions[imgVersionCount] = _imgUri;
-        artists[imgVersionCount] = msg.sender;
-        imgVersionCount += 1;
         addressStorage = IAddressStorage(_addressStorage);
 
-        for (uint8 i = 0; i < _mintReqs.length; ++i) { 
+        for (uint8 i = 0; i < _mintReqs.length; ++i) {
             mintReqs[i] = _mintReqs[i];
         }
     }
@@ -108,7 +99,7 @@ contract VineyardV1 is ERC721, Ownable {
     }
 
     function newVineyardGiveaway(uint16[] calldata _tokenAttributes) public {
-        GiveawayTokenInterface(addressStorage.giveawayToken()).burnOne();
+        IGiveawayToken(addressStorage.giveawayToken()).burnOne();
         _mintVineyard(_tokenAttributes);
     }
 
@@ -384,88 +375,5 @@ contract VineyardV1 is ERC721, Ownable {
         );
 
         return output;
-    }
-
-    // UPDATING
-    uint256 public startTimestamp;
-    mapping(uint256 => uint256) public voted;
-    uint256 public forVotes;
-    uint256 public againstVotes;
-    string public newUri;
-    address public artist;
-    bool public settled = true;
-
-    event Suggest(
-        uint256 startTimestamp,
-        string newUri,
-        address artist,
-        uint256 bottle,
-        uint256 forVotes
-    );
-    event Support(uint256 startTimestamp, uint256 bottle, uint256 forVotes);
-    event Retort(uint256 startTimestamp, uint256 bottle, uint256 againstVotes);
-    event Complete(uint256 startTimestamp);
-
-    function suggest(
-        uint256 _tokenId,
-        string calldata _newUri,
-        address _artist
-    ) public {
-        require(
-            (forVotes == 0 && againstVotes == 0) ||
-                (forVotes > againstVotes &&
-                    startTimestamp + 9 days < block.timestamp) ||
-                (forVotes > againstVotes &&
-                    startTimestamp + 48 hours < block.timestamp &&
-                    !settled) ||
-                (againstVotes > forVotes &&
-                    startTimestamp + 36 hours < block.timestamp),
-            "Too soon"
-        );
-        WineBottle _bottle = WineBottle(addressStorage.bottle());
-        require(_bottle.ownerOf(_tokenId) == msg.sender, "Bottle not owned");
-
-        startTimestamp = block.timestamp;
-        voted[_tokenId] = block.timestamp;
-        forVotes = _bottle.bottleAge(_tokenId);
-        againstVotes = 0;
-        newUri = _newUri;
-        artist = _artist;
-        settled = false;
-        emit Suggest(startTimestamp, _newUri, _artist, _tokenId, forVotes);
-    }
-
-    function support(uint256 _tokenId) public {
-        WineBottle _bottle = WineBottle(addressStorage.bottle());
-        require(_bottle.ownerOf(_tokenId) == msg.sender, "Bottle not owned");
-        require(voted[_tokenId] + 36 hours < block.timestamp, "Double vote");
-        require(startTimestamp + 36 hours > block.timestamp, "No queue");
-
-        voted[_tokenId] = block.timestamp;
-        forVotes += _bottle.bottleAge(_tokenId);
-        emit Support(startTimestamp, _tokenId, forVotes);
-    }
-
-    function retort(uint256 _tokenId) public {
-        WineBottle _bottle = WineBottle(addressStorage.bottle());
-        require(_bottle.ownerOf(_tokenId) == msg.sender, "Bottle not owned");
-        require(voted[_tokenId] + 36 hours < block.timestamp, "Double vote");
-        require(startTimestamp + 36 hours > block.timestamp, "No queue");
-
-        voted[_tokenId] = block.timestamp;
-        againstVotes += _bottle.bottleAge(_tokenId);
-        emit Retort(startTimestamp, _tokenId, againstVotes);
-    }
-
-    function complete() public {
-        require(forVotes > againstVotes, "Blocked");
-        require(startTimestamp + 36 hours < block.timestamp, "Too soon");
-        require(startTimestamp + 48 hours > block.timestamp, "Too late");
-
-        imgVersions[imgVersionCount] = newUri;
-        artists[imgVersionCount] = artist;
-        imgVersionCount += 1;
-        settled = true;
-        emit Complete(startTimestamp);
     }
 }
