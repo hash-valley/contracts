@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: Unlicensed
 pragma solidity ^0.8.0;
 
-import "./IAddressStorage.sol";
 import "./IWineBottle.sol";
 
 contract VotableUri {
@@ -12,7 +11,7 @@ contract VotableUri {
     string public newUri;
     address public artist;
     bool public settled = true;
-    WineBottle bottle;
+    IWineBottle bottle;
 
     mapping(uint256 => string) public imgVersions;
     uint256 public imgVersionCount = 0;
@@ -31,8 +30,8 @@ contract VotableUri {
     event Complete(uint256 startTimestamp, string newUri, address artist);
 
     constructor(address _bottle, string memory _imgUri) {
-        bottle = WineBottle(_bottle);
-        
+        bottle = IWineBottle(_bottle);
+
         imgVersions[imgVersionCount] = _imgUri;
         artists[imgVersionCount] = msg.sender;
         imgVersionCount += 1;

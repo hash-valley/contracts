@@ -51,10 +51,7 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
         address _addressStorage,
         uint16[3][15] memory _mintReqs,
         address _bottle
-    )
-        ERC721("Hash Valley Vineyard", "VNYD")
-        VotableUri(_bottle, _imgUri)
-    {
+    ) ERC721("Hash Valley Vineyard", "VNYD") VotableUri(_bottle, _imgUri) {
         setBaseURI(_baseUri);
         addressStorage = IAddressStorage(_addressStorage);
 
@@ -183,7 +180,7 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
         xp[_tokenId] += 100 * streak[_tokenId];
 
         address wineBottle = addressStorage.bottle();
-        uint256 bottleId = WineBottle(wineBottle).newBottle(
+        uint256 bottleId = IWineBottle(wineBottle).newBottle(
             _tokenId,
             ownerOf(_tokenId)
         );

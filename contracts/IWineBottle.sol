@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicensed
 pragma solidity ^0.8.0;
 
-interface WineBottle {
+interface IWineBottle {
     function newBottle(uint256 _vineyard, address _owner)
         external
         returns (uint256);
