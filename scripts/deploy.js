@@ -1,5 +1,5 @@
 const hre = require("hardhat");
-const config = require("../config.json");
+const config = require("../config");
 
 async function deploy() {
   const Storage = await hre.ethers.getContractFactory("AddressStorage");
@@ -11,7 +11,8 @@ async function deploy() {
   const vineyard = await Vineyard.deploy(
     config.vine_base_uri,
     config.vine_img_uri,
-    storage.address
+    storage.address,
+    config.mintReqs
   );
   await vineyard.deployed();
   console.log("Vineyard deployed to:", vineyard.address);
@@ -25,7 +26,8 @@ async function deploy() {
   const bottle = await WineBottle.deploy(
     config.bottle_base_uri,
     config.bottle_img_uri,
-    storage.address
+    storage.address,
+    config.eraBounds
   );
   await bottle.deployed();
   console.log("Bottle deployed to:", bottle.address);
@@ -35,10 +37,10 @@ async function deploy() {
   await vinegar.deployed();
   console.log("Vinegar deployed to:", vinegar.address);
 
-  const Give = await hre.ethers.getContractFactory("GiveawayToken")
-  const give = await Give.deploy()
-  await give.deployed()
-  console.log("GiveToken deployed to:", give.address)
+  const Give = await hre.ethers.getContractFactory("GiveawayToken");
+  const give = await Give.deploy();
+  await give.deployed();
+  console.log("GiveToken deployed to:", give.address);
 
   await storage.setAddresses(
     cellar.address,

@@ -58,28 +58,18 @@ contract VineyardV1 is ERC721, Ownable {
     constructor(
         string memory _baseUri,
         string memory _imgUri,
-        address _addressStorage
+        address _addressStorage,
+        uint16[3][15] memory _mintReqs
     ) ERC721("Hash Valley Vineyard", "VNYD") {
         setBaseURI(_baseUri);
         imgVersions[imgVersionCount] = _imgUri;
         artists[imgVersionCount] = msg.sender;
         imgVersionCount += 1;
         addressStorage = IAddressStorage(_addressStorage);
-        mintReqs[0] = [21, 21, 1];
-        mintReqs[1] = [131, 131, 0];
-        mintReqs[2] = [20, 20, 0];
-        mintReqs[3] = [240, 20310, 0];
-        mintReqs[4] = [0, 12119, 0];
-        mintReqs[5] = [1000, 10000, 0];
-        mintReqs[6] = [0, 6684, 1];
-        mintReqs[7] = [0, 15253, 0];
-        mintReqs[8] = [29032, 29032, 0];
-        mintReqs[9] = [0, 1200, 0];
-        mintReqs[10] = [0, 455, 0];
-        mintReqs[11] = [0, 13435, 0];
-        mintReqs[12] = [0, 7080, 0];
-        mintReqs[13] = [0, 120, 0];
-        mintReqs[14] = [300, 2362, 0];
+
+        for (uint8 i = 0; i < _mintReqs.length; ++i) { 
+            mintReqs[i] = _mintReqs[i];
+        }
     }
 
     function validateAttributes(uint16[] calldata _tokenAttributes)

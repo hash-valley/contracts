@@ -1,7 +1,7 @@
-const { expect, assert } = require("chai");
+const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-const config = require("../config.json");
+const config = require("../config");
 
 describe("Hash Valley tests", function () {
   let accounts;
@@ -22,7 +22,8 @@ describe("Hash Valley tests", function () {
     vineyard = await Vineyard.deploy(
       config.vine_base_uri,
       config.vine_img_uri,
-      storage.address
+      storage.address,
+      config.mintReqs
     );
     await vineyard.deployed();
 
@@ -34,7 +35,8 @@ describe("Hash Valley tests", function () {
     bottle = await WineBottle.deploy(
       config.bottle_base_uri,
       config.bottle_img_uri,
-      storage.address
+      storage.address,
+      config.eraBounds
     );
     await bottle.deployed();
 
@@ -429,8 +431,8 @@ describe("Hash Valley tests", function () {
       await ethers.provider.send("evm_increaseTime", [12]);
       await ethers.provider.send("evm_mine", []);
 
-      const age = await bottle.bottleAge(0);
-      expect(age).to.equal(12);
+      const age = Number(await bottle.bottleAge(0));
+      expect(age === 12 || age === 13).to.be.true;
     });
 
     it("cellar age", async () => {
@@ -540,7 +542,7 @@ describe("Hash Valley tests", function () {
     });
   });
 
-  describe.only("Council", function () {
+  describe("Council", function () {
     beforeEach(async () => {
       await deploy();
       await vineyard.newVineyards([12, 13, 0, 4]);

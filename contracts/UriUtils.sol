@@ -1,7 +1,12 @@
-//SPDX-License-Identifier: Unlicensed
+//SPDX-License-Identifier: MIT License
 pragma solidity ^0.8.0;
 
+/// @title UriUtils
+/// @author encodeBase64: Brecht Devos <brecht@loopring.org>
+///         uint2str: Oraclize
+///         toAsciiString: stackoverflow user tkeber
 library UriUtils {
+    /// @notice Converts a uint into a string
     function uint2str(uint256 _i)
         internal
         pure
@@ -31,7 +36,7 @@ library UriUtils {
     bytes internal constant TABLE =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-    /// @notice Encodes some bytes to the base64 representation
+    /// @notice Provides a function for encoding some bytes in base64
     function encodeBase64(bytes memory data)
         internal
         pure
@@ -97,6 +102,7 @@ library UriUtils {
         return string(result);
     }
 
+    /// @notice converts address to string
     function toAsciiString(address x) internal pure returns (string memory) {
         bytes memory s = new bytes(40);
         for (uint256 i = 0; i < 20; i++) {

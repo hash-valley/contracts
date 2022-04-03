@@ -49,21 +49,22 @@ contract WineBottleV1 is ERC721, Ownable {
     uint8[4][] internal wineNotes;
     uint8[][][] internal wineTypes;
 
-    uint256 internal constant year = 365 days;
-    uint256 internal constant maxAge = 13000000000 * year;
+    uint256 internal constant maxAge = 13000000000 * 365 days;
     uint256[] internal eraBounds;
 
     // CONSTRUCTOR
     constructor(
         string memory _baseUri,
         string memory _imgUri,
-        address _addressStorage
+        address _addressStorage,
+        uint256[] memory _eraBounds
     ) ERC721("Hash Valley Vintage", "VNTG") {
         setBaseURI(_baseUri);
         imgVersions[imgVersionCount] = _imgUri;
         artists[imgVersionCount] = msg.sender;
         imgVersionCount += 1;
         addressStorage = IAddressStorage(_addressStorage);
+        eraBounds = _eraBounds;
 
         wineNotes.push([4, 4, 1]);
         wineNotes.push([5, 2]);
@@ -122,23 +123,6 @@ contract WineBottleV1 is ERC721, Ownable {
         wineTypes[3].push(new uint8[](2));
         wineTypes[3][2].push(3);
         wineTypes[3][2].push(3);
-
-        eraBounds = [
-            0,
-            100 * year,
-            250 * year,
-            500 * year,
-            800 * year,
-            1600 * year,
-            2700 * year,
-            4000 * year,
-            10000 * year,
-            100000 * year,
-            1000000000 * year,
-            4000000000 * year,
-            13000000000 * year,
-            13000000001 * year
-        ];
     }
 
     // PUBLIC FUNCTIONS
