@@ -67,9 +67,9 @@ contract VineyardV1 is ERC721, Ownable, VotableUri {
         returns (bool)
     {
         require(_tokenAttributes.length == 4, "Incorrect number of params");
+        require(_tokenAttributes[0] <= 14, "invalid 1st param");
         uint256 lower = mintReqs[_tokenAttributes[0]][0];
         uint256 upper = mintReqs[_tokenAttributes[0]][1];
-        require(_tokenAttributes[0] <= 14, "invalid 1st param");
         require(
             _tokenAttributes[1] >= lower && _tokenAttributes[1] <= upper,
             "Invalid 2nd param"
