@@ -18,11 +18,11 @@ describe("Hash Valley tests", function () {
     storage = await Storage.deploy();
     await storage.deployed();
 
-    const Cellar = await hre.ethers.getContractFactory("CellarV1");
+    const Cellar = await hre.ethers.getContractFactory("Cellar");
     cellar = await Cellar.deploy(storage.address);
     await cellar.deployed();
 
-    const WineBottle = await hre.ethers.getContractFactory("WineBottleV1");
+    const WineBottle = await hre.ethers.getContractFactory("WineBottle");
     bottle = await WineBottle.deploy(
       config.bottle_base_uri,
       config.bottle_img_uri,
@@ -31,7 +31,7 @@ describe("Hash Valley tests", function () {
     );
     await bottle.deployed();
 
-    const Vineyard = await hre.ethers.getContractFactory("VineyardV1");
+    const Vineyard = await hre.ethers.getContractFactory("Vineyard");
     vineyard = await Vineyard.deploy(
       config.vine_base_uri,
       config.vine_img_uri,

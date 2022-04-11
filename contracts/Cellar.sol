@@ -19,15 +19,15 @@ interface IERC721 {
     function burn(uint256 tokenId) external;
 }
 
-interface VinegarContract {
+interface IVinegar {
     function spoilReward(address recipient, uint256 amount) external;
 }
 
-interface WineBottle {
+interface IWineBottle {
     function cellarAged(uint256 cellarTime) external view returns (uint256);
 }
 
-contract CellarV1 {
+contract Cellar {
     IAddressStorage public addressStorage;
 
     mapping(uint256 => uint256) public staked;
@@ -104,9 +104,9 @@ contract CellarV1 {
             );
             emit Withdrawn(_tokenID, withdrawn[_tokenID] - staked[_tokenID]);
         } else {
-            VinegarContract(addressStorage.vinegar()).spoilReward(
+            IVinegar(addressStorage.vinegar()).spoilReward(
                 msg.sender,
-                WineBottle(addressStorage.bottle()).cellarAged(
+                IWineBottle(addressStorage.bottle()).cellarAged(
                     cellarTime(_tokenID)
                 ) * 1e18
             );

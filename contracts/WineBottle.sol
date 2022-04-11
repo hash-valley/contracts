@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: Unlicensed
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "./IAddressStorage.sol";
 import "./UriUtils.sol";
 import "./VotableUri.sol";
@@ -28,7 +28,7 @@ interface IVineyard {
         returns (uint16[] memory attributes);
 }
 
-contract WineBottleV1 is ERC721, Ownable, VotableUri {
+contract WineBottle is ERC721, Ownable, VotableUri {
     IAddressStorage public addressStorage;
 
     uint256 public totalSupply;

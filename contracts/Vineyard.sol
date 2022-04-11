@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: Unlicensed
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "./IAddressStorage.sol";
 import "./IWineBottle.sol";
 import "./UriUtils.sol";
@@ -12,7 +12,7 @@ interface IGiveawayToken {
     function burnOne() external;
 }
 
-contract VineyardV1 is ERC721, Ownable, VotableUri {
+contract Vineyard is ERC721, Ownable, VotableUri {
     uint256 public totalSupply;
     uint256 public immutable firstSeasonLength = 3 weeks;
     uint256 public immutable seasonLength = 12 weeks;
