@@ -1,8 +1,19 @@
 //SPDX-License-Identifier: Unlicensed
+/**
+.___     .___ .______  ._______._____  .______  .______  
+|   |___ : __|:      \ : .____/:_ ___\ :      \ : __   \ 
+|   |   || : ||       || : _/\ |   |___|   .   ||  \____|
+|   :   ||   ||   |   ||   /  \|   /  ||   :   ||   :  \ 
+ \      ||   ||___|   ||_.: __/|. __  ||___|   ||   |___\
+  \____/ |___|    |___|   :/    :/ |. |    |___||___|    
+                                :   :/                   
+                                    :                    
+
+ */
 pragma solidity ^0.8.0;
 
 import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./IAddressStorage.sol";
+import "./interfaces/IAddressStorage.sol";
 
 contract Vinegar is ERC20 {
     IAddressStorage public addressStorage;

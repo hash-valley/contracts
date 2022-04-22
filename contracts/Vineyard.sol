@@ -1,10 +1,20 @@
 //SPDX-License-Identifier: Unlicensed
-pragma solidity ^0.8.0;
+/**
+.___     .___ .______  ._______ ____   ____.______  .______  .______  
+|   |___ : __|:      \ : .____/ \   \_/   /:      \ : __   \ :_ _   \ 
+|   |   || : ||       || : _/\   \___ ___/ |   .   ||  \____||   |   |
+|   :   ||   ||   |   ||   /  \    |   |   |   :   ||   :  \ | . |   |
+ \      ||   ||___|   ||_.: __/    |___|   |___|   ||   |___\|. ____/ 
+  \____/ |___|    |___|   :/                   |___||___|     :/      
+                                                              :       
+                                                                      
+ */
+pragma solidity ^0.8.12;
 
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
-import "./IAddressStorage.sol";
-import "./IWineBottle.sol";
+import "./interfaces/IAddressStorage.sol";
+import "./interfaces/IWineBottle.sol";
 import "./UriUtils.sol";
 import "./VotableUri.sol";
 
@@ -339,60 +349,43 @@ contract Vineyard is ERC721, Ownable, VotableUri {
         );
 
         uint16[] memory attr = tokenAttributes[_tokenId];
-        string memory json = UriUtils.encodeBase64(
-            bytes(
-                string(
-                    abi.encodePacked(
-                        string(
-                            abi.encodePacked(
-                                '{"name": "Hash Valley Winery Vineyard ',
-                                UriUtils.uint2str(_tokenId),
-                                '", "external_url": "',
-                                baseUri,
-                                "/api/vine?version=",
-                                UriUtils.uint2str(_version),
-                                "&token=",
-                                UriUtils.uint2str(_tokenId),
-                                '", "description": "A vineyard...", "image": "'
-                            )
-                        ),
-                        string(
-                            abi.encodePacked(
-                                imgVersions[_version],
-                                "?seed=",
-                                UriUtils.uint2str(attr[0]),
-                                "-",
-                                UriUtils.uint2str(attr[1]),
-                                "-",
-                                UriUtils.uint2str(attr[2]),
-                                "-",
-                                UriUtils.uint2str(attr[3]),
-                                "-",
-                                UriUtils.uint2str(xp[_tokenId]),
-                                '", '
-                            )
-                        ),
-                        string(
-                            abi.encodePacked(
-                                '"seller_fee_basis_points": ',
-                                UriUtils.uint2str(sellerFee),
-                                ", "
-                            )
-                        ),
-                        string(
-                            abi.encodePacked(
-                                '"fee_recipient": "0x',
-                                UriUtils.toAsciiString(artists[_version]),
-                                '"'
-                            )
-                        ),
-                        "}"
-                    )
-                )
+
+        string memory json = string.concat(
+            string.concat(
+                '{"name": "Hash Valley Winery Vineyard ',
+                UriUtils.uint2str(_tokenId),
+                '", "external_url": "',
+                baseUri,
+                "/api/vine?version=",
+                UriUtils.uint2str(_version),
+                "&token=",
+                UriUtils.uint2str(_tokenId),
+                '", "description": "A vineyard...", "image": "'
+            ),
+            string.concat(
+                imgVersions[_version],
+                "?seed=",
+                UriUtils.uint2str(attr[0]),
+                "-",
+                UriUtils.uint2str(attr[1]),
+                "-",
+                UriUtils.uint2str(attr[2]),
+                "-",
+                UriUtils.uint2str(attr[3]),
+                "-",
+                UriUtils.uint2str(xp[_tokenId]),
+                '", ',
+                '"seller_fee_basis_points": ',
+                UriUtils.uint2str(sellerFee),
+                ', "fee_recipient": "0x',
+                UriUtils.toAsciiString(artists[_version]),
+                '"}'
             )
         );
-        string memory output = string(
-            abi.encodePacked("data:application/json;base64,", json)
+
+        string memory output = string.concat(
+            "data:application/json;base64,",
+            UriUtils.encodeBase64((bytes(json)))
         );
 
         return output;

@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicensed
 pragma solidity ^0.8.0;
 
-import "./IWineBottle.sol";
+import "./interfaces/IWineBottle.sol";
 
 contract VotableUri {
     uint256 public startTimestamp;
