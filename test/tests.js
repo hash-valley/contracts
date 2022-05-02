@@ -36,8 +36,7 @@ describe("Hash Valley tests", function () {
       config.vine_base_uri,
       config.vine_img_uri,
       storage.address,
-      config.mintReqs,
-      bottle.address
+      config.mintReqs
     );
     await vineyard.deployed();
 

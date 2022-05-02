@@ -12,6 +12,7 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IAddressStorage.sol";
+import "./interfaces/IVinegar.sol";
 
 interface IERC721 {
     function safeTransferFrom(
@@ -27,10 +28,6 @@ interface IERC721 {
     ) external;
 
     function burn(uint256 tokenId) external;
-}
-
-interface IVinegar {
-    function spoilReward(address recipient, uint256 amount) external;
 }
 
 interface IWineBottle {

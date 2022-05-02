@@ -22,14 +22,24 @@ contract Vinegar is ERC20 {
         addressStorage = IAddressStorage(_addressStorage);
     }
 
+    /// @notice mints tokens to recipient address of vote
+    function voteReward(address recipient) external {
+        require(
+            msg.sender == addressStorage.bottle() ||
+                msg.sender == addressStorage.vineyard(),
+            "invalid caller"
+        );
+        _mint(recipient, 3 weeks * 1e18);
+    }
+
     /// @notice mints tokens to recipient who spoiled their bottle
-    function spoilReward(address recipient, uint256 amount) public {
+    function spoilReward(address recipient, uint256 amount) external {
         require(msg.sender == addressStorage.cellar(), "not cellar");
         _mint(recipient, amount * 1e18);
     }
 
     /// @notice burns the specified amount of tokens
-    function burn(address account, uint256 amount) public {
+    function burn(address account, uint256 amount) external {
         require(msg.sender == addressStorage.bottle(), "Not Bottle");
         _burn(account, amount);
     }

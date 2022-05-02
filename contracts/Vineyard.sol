@@ -13,7 +13,6 @@ pragma solidity ^0.8.12;
 
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/IAddressStorage.sol";
 import "./interfaces/IWineBottle.sol";
 import "./UriUtils.sol";
 import "./VotableUri.sol";
@@ -28,7 +27,6 @@ contract Vineyard is ERC721, Ownable, VotableUri {
     uint256 public immutable seasonLength = 12 weeks;
     uint256 public immutable maxVineyards = 5500;
     uint256 public gameStart;
-    IAddressStorage public addressStorage;
 
     mapping(uint256 => uint16[]) internal tokenAttributes;
     mapping(uint256 => uint256) public planted;
@@ -59,9 +57,11 @@ contract Vineyard is ERC721, Ownable, VotableUri {
         string memory _baseUri,
         string memory _imgUri,
         address _addressStorage,
-        uint16[3][15] memory _mintReqs,
-        address _bottle
-    ) ERC721("Hash Valley Vineyard", "VNYD") VotableUri(_bottle, _imgUri) {
+        uint16[3][15] memory _mintReqs
+    )
+        ERC721("Hash Valley Vineyard", "VNYD")
+        VotableUri(_addressStorage, _imgUri)
+    {
         setBaseURI(_baseUri);
         addressStorage = IAddressStorage(_addressStorage);
 

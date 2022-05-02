@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IWineBottle.sol";
+import "./interfaces/IAddressStorage.sol";
+import "./interfaces/IVinegar.sol";
 
 contract VotableUri {
     uint256 public startTimestamp;
@@ -11,7 +13,7 @@ contract VotableUri {
     string public newUri;
     address public artist;
     bool public settled = true;
-    IWineBottle bottle;
+    IAddressStorage addressStorage;
 
     mapping(uint256 => string) public imgVersions;
     uint256 public imgVersionCount = 0;
@@ -30,9 +32,8 @@ contract VotableUri {
     event Complete(uint256 startTimestamp, string newUri, address artist);
 
     // CONSTRUCTOR
-    constructor(address _bottle, string memory _imgUri) {
-        bottle = IWineBottle(_bottle);
-
+    constructor(address _addressStorage, string memory _imgUri) {
+        addressStorage = IAddressStorage(_addressStorage);
         imgVersions[imgVersionCount] = _imgUri;
         artists[imgVersionCount] = msg.sender;
         imgVersionCount += 1;
@@ -59,6 +60,7 @@ contract VotableUri {
                     startTimestamp + 36 hours < block.timestamp),
             "Too soon"
         );
+        IWineBottle bottle = IWineBottle(addressStorage.bottle());
         require(bottle.ownerOf(_tokenId) == msg.sender, "Bottle not owned");
 
         startTimestamp = block.timestamp;
@@ -74,6 +76,7 @@ contract VotableUri {
     /// @notice vote for the current suggestion
     /// @param _tokenId bottle to vote with
     function support(uint256 _tokenId) public {
+        IWineBottle bottle = IWineBottle(addressStorage.bottle());
         require(bottle.ownerOf(_tokenId) == msg.sender, "Bottle not owned");
         require(voted[_tokenId] + 36 hours < block.timestamp, "Double vote");
         require(startTimestamp + 36 hours > block.timestamp, "No queue");
@@ -86,6 +89,7 @@ contract VotableUri {
     /// @notice vote against current suggestion
     /// @param _tokenId bottle to vote with
     function retort(uint256 _tokenId) public {
+        IWineBottle bottle = IWineBottle(addressStorage.bottle());
         require(bottle.ownerOf(_tokenId) == msg.sender, "Bottle not owned");
         require(voted[_tokenId] + 36 hours < block.timestamp, "Double vote");
         require(startTimestamp + 36 hours > block.timestamp, "No queue");
@@ -105,6 +109,7 @@ contract VotableUri {
         artists[imgVersionCount] = artist;
         imgVersionCount += 1;
         settled = true;
+        IVinegar(addressStorage.vinegar()).voteReward(artist);
         emit Complete(startTimestamp, newUri, artist);
     }
 }

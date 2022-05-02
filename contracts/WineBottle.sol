@@ -14,22 +14,12 @@ pragma solidity ^0.8.12;
 
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/IAddressStorage.sol";
 import "./UriUtils.sol";
 import "./VotableUri.sol";
+import "./interfaces/IVinegar.sol";
 
 interface ICellar {
     function cellarTime(uint256 _tokenID) external view returns (uint256);
-}
-
-interface IVinegar {
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external returns (bool);
-
-    function burn(address account, uint256 amount) external;
 }
 
 interface IVineyard {
@@ -40,8 +30,6 @@ interface IVineyard {
 }
 
 contract WineBottle is ERC721, Ownable, VotableUri {
-    IAddressStorage public addressStorage;
-
     uint256 public totalSupply;
     uint256 public lastId = 0;
     mapping(uint256 => uint256) public bottleMinted;
@@ -68,9 +56,11 @@ contract WineBottle is ERC721, Ownable, VotableUri {
         string memory _imgUri,
         address _addressStorage,
         uint256[] memory _eraBounds
-    ) ERC721("Hash Valley Vintage", "VNTG") VotableUri(address(this), _imgUri) {
+    )
+        ERC721("Hash Valley Vintage", "VNTG")
+        VotableUri(_addressStorage, _imgUri)
+    {
         setBaseURI(_baseUri);
-        addressStorage = IAddressStorage(_addressStorage);
         eraBounds = _eraBounds;
 
         wineNotes.push([4, 4, 1]);
