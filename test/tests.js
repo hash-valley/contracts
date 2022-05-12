@@ -36,7 +36,8 @@ describe("Hash Valley tests", function () {
       config.vine_base_uri,
       config.vine_img_uri,
       storage.address,
-      config.mintReqs
+      config.mintReqs,
+      config.climates
     );
     await vineyard.deployed();
 
@@ -258,6 +259,47 @@ describe("Hash Valley tests", function () {
       await ethers.provider.send("evm_increaseTime", [time]);
       await expect(vineyard.connect(accounts[1]).water(0)).to.be.revertedWith(
         "Vineyard can't be watered"
+      );
+    });
+
+    it.only("sprinkler means you don't have to water", async () => {
+      await vineyard.connect(accounts[1]).buySprinkler(0, {
+        value: ethers.utils.parseEther("0.01"),
+      });
+      await vineyard.connect(accounts[1]).plant(0);
+
+      let seasonLength = Number(await vineyard.firstSeasonLength());
+      await ethers.provider.send("evm_increaseTime", [seasonLength - 10]);
+      await ethers.provider.send("evm_mine", []);
+
+      await vineyard.connect(accounts[1]).harvest(0);
+    });
+
+    it("sprinkler lasts 3 years", async () => {
+      await vineyard.connect(accounts[1]).buySprinkler(0, {
+        value: ethers.utils.parseEther("0.01"),
+      });
+
+      let firstSeasonLength = Number(await vineyard.firstSeasonLength());
+      let seasonLength = Number(await vineyard.seasonLength());
+      await ethers.provider.send("evm_increaseTime", [firstSeasonLength]);
+      for (let i = 0; i < 10; i++) {
+        await ethers.provider.send("evm_increaseTime", [seasonLength]);
+      }
+      await ethers.provider.send("evm_mine", []);
+
+      await vineyard.connect(accounts[1]).plant(0);
+      await ethers.provider.send("evm_increaseTime", [seasonLength - 10]);
+      await ethers.provider.send("evm_mine", []);
+      await vineyard.connect(accounts[1]).harvest(0);
+
+      await ethers.provider.send("evm_increaseTime", [100]);
+      await ethers.provider.send("evm_mine", []);
+      await vineyard.connect(accounts[1]).plant(0);
+      await ethers.provider.send("evm_increaseTime", [seasonLength - 200]);
+      await ethers.provider.send("evm_mine", []);
+      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
+        "Vineyard not alive"
       );
     });
 
@@ -816,6 +858,9 @@ describe("Hash Valley tests", function () {
       expect(await vineyard.artists(1)).to.equal(newAddress);
       expect((await vineyard.imgVersionCount()).toString()).to.equal("2");
       expect(await vineyard.imgVersions(1)).to.equal(newCid);
+      expect((await vinegar.balanceOf(newAddress)).toString()).to.equal(
+        "1814400000000000000000000"
+      );
 
       // bottle
       await bottle.suggest(0, newCid, newAddress);

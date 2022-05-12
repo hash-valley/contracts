@@ -15,6 +15,7 @@ pragma solidity ^0.8.12;
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "./UriUtils.sol";
+import "./Randomness.sol";
 import "./VotableUri.sol";
 import "./interfaces/IVinegar.sol";
 
@@ -27,6 +28,8 @@ interface IVineyard {
         external
         view
         returns (uint16[] memory attributes);
+
+    function getClimate(uint256 _tokenId) external view returns (uint8);
 }
 
 contract WineBottle is ERC721, Ownable, VotableUri {
@@ -189,11 +192,6 @@ contract WineBottle is ERC721, Ownable, VotableUri {
     }
 
     // MINTING FUNCTIONS
-    /// @notice creates a random number
-    function random(string memory input) internal pure returns (uint256) {
-        return uint256(keccak256(abi.encodePacked(input)));
-    }
-
     /// @notice mints a new bottle with generated attributes
     function newBottle(uint256 _vineyard, address _owner)
         external
@@ -205,27 +203,45 @@ contract WineBottle is ERC721, Ownable, VotableUri {
         uint256 tokenID = totalSupply;
         bottleMinted[tokenID] = block.timestamp;
 
-        // TODO: some hooha with vineyard for attributes
         uint16[] memory vinParams = IVineyard(vineyard).getTokenAttributes(
             _vineyard
         );
-        uint256 rand1 = random(
-            string(abi.encodePacked(block.timestamp, tokenID))
+
+        uint256 bottleClass = Randomness.weightedRandomSelection(
+            block.timestamp,
+            tokenID,
+            wineClasses,
+            vinParams[1]
         );
-        uint256 rand2 = random(
-            string(abi.encodePacked(block.timestamp + 1, tokenID))
+        uint256 bottleSubtype = Randomness.weightedRandomSelection(
+            block.timestamp + 1,
+            tokenID,
+            wineSubtypes[bottleClass],
+            vinParams[3]
         );
-        uint256 rand3 = random(
-            string(abi.encodePacked(block.timestamp + 2, tokenID))
+        uint256 bottleNote = Randomness.weightedRandomSelection(
+            block.timestamp + 2,
+            tokenID,
+            wineNotes[bottleClass][bottleSubtype],
+            IVineyard(vineyard).getClimate(_vineyard)
         );
-        uint256 rand4 = random(
-            string(abi.encodePacked(block.timestamp + 3, tokenID))
+        uint256 bottleType = Randomness.weightedRandomSelection(
+            block.timestamp + 3,
+            tokenID,
+            wineTypes[bottleClass][bottleSubtype][bottleNote],
+            0
         );
-        uint256 bottleClass = rand1 % wineClasses;
-        uint256 bottleSubtype = rand2 % wineSubtypes[bottleClass];
-        uint256 bottleNote = rand3 % wineNotes[bottleClass][bottleSubtype];
-        uint256 bottleType = rand4 %
-            wineTypes[bottleClass][bottleSubtype][bottleNote];
+
+        // adjust for champagne
+        if (bottleClass == 3 && vinParams[0] != 14) {
+            if (
+                (bottleSubtype == 0 && bottleNote == 0 && bottleType == 0) ||
+                (bottleSubtype == 0 && bottleNote == 2 && bottleType == 0) ||
+                (bottleSubtype == 2 && bottleNote == 0 && bottleType == 0)
+            ) {
+                bottleType++;
+            }
+        }
 
         attributes[tokenID] = [
             uint8(bottleClass),

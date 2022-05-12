@@ -12,7 +12,8 @@ async function deploy() {
     config.vine_base_uri,
     config.vine_img_uri,
     storage.address,
-    config.mintReqs
+    config.mintReqs,
+    config.climates
   );
   await vineyard.deployed();
   console.log("Vineyard deployed to:", vineyard.address);

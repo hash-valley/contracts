@@ -28,17 +28,21 @@ contract Vineyard is ERC721, Ownable, VotableUri {
     uint256 public immutable maxVineyards = 5500;
     uint256 public gameStart;
 
+    /// @dev attributes are
+    /// location, elevation, isNegative, soil
     mapping(uint256 => uint16[]) internal tokenAttributes;
     mapping(uint256 => uint256) public planted;
     mapping(uint256 => uint256) public watered;
     mapping(uint256 => uint256) public xp;
     mapping(uint256 => uint16) public streak;
     mapping(uint256 => uint256) public lastHarvested;
+    mapping(uint256 => uint256) public sprinkler;
 
     string public baseUri;
     uint16 public immutable sellerFee = 750;
 
     uint16[3][15] internal mintReqs;
+    uint8[15] public climates;
 
     // EVENTS
     event VineyardMinted(
@@ -48,6 +52,7 @@ contract Vineyard is ERC721, Ownable, VotableUri {
         uint256 elevationNegative,
         uint256 soilType
     );
+    event SprinklerPurchased(uint256 tokenId);
     event Start(uint48 timestamp);
     event Planted(uint256 tokenId, uint256 season);
     event Harvested(uint256 tokenId, uint256 season, uint256 bottleId);
@@ -57,7 +62,8 @@ contract Vineyard is ERC721, Ownable, VotableUri {
         string memory _baseUri,
         string memory _imgUri,
         address _addressStorage,
-        uint16[3][15] memory _mintReqs
+        uint16[3][15] memory _mintReqs,
+        uint8[15] memory _climates
     )
         ERC721("Hash Valley Vineyard", "VNYD")
         VotableUri(_addressStorage, _imgUri)
@@ -68,6 +74,8 @@ contract Vineyard is ERC721, Ownable, VotableUri {
         for (uint8 i = 0; i < _mintReqs.length; ++i) {
             mintReqs[i] = _mintReqs[i];
         }
+
+        climates = _climates;
     }
 
     /// @notice validates minting attributes
@@ -135,6 +143,18 @@ contract Vineyard is ERC721, Ownable, VotableUri {
         );
     }
 
+    /// @notice buys a sprinkler (lasts 3 years)
+    function buySprinkler(uint256 _tokenId) public payable {
+        require(
+            sprinkler[_tokenId] + 156 weeks < block.timestamp,
+            "already sprinkled"
+        );
+        require(msg.value >= 0.01 ether, "Value below price");
+        sprinkler[_tokenId] = block.timestamp;
+
+        emit SprinklerPurchased(_tokenId);
+    }
+
     /// @notice returns token attributes array
     function getTokenAttributes(uint256 _tokenId)
         public
@@ -142,6 +162,11 @@ contract Vineyard is ERC721, Ownable, VotableUri {
         returns (uint16[] memory attributes)
     {
         attributes = tokenAttributes[_tokenId];
+    }
+
+    /// @notice returns token climate
+    function getClimate(uint256 _tokenId) public view returns (uint8) {
+        return climates[tokenAttributes[_tokenId][0]];
     }
 
     // LOGISTICS
@@ -229,13 +254,16 @@ contract Vineyard is ERC721, Ownable, VotableUri {
 
     /// @notice min time before watering window opens
     function minWaterTime(uint256 _tokenId) public view returns (uint256) {
-        // TODO: some hooha with vineyard stats for time
+        uint256 sprinklerBreaks = sprinkler[_tokenId] + 156 weeks;
+        if (sprinklerBreaks > block.timestamp) {
+            return sprinklerBreaks - block.timestamp;
+        }
         return 24 hours;
     }
 
     /// @notice window of time to water in
-    function waterWindow(uint256 _tokenId) public view returns (uint256) {
-        // TODO: some hooha with vineyard stats for time
+    function waterWindow(uint256 _tokenId) public pure returns (uint256) {
+        if (_tokenId == 4 || _tokenId == 9 || _tokenId == 11) return 48 hours;
         return 24 hours;
     }
 
