@@ -1,9 +1,8 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
-require('hardhat-abi-exporter');
+require("hardhat-abi-exporter");
 require("hardhat-gas-reporter");
-const config = require("./config.json")
-
+const config = require("./config.json");
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -26,9 +25,9 @@ module.exports = {
     version: "0.8.13",
     settings: {
       optimizer: {
-        enabled: true
-      }
-    }
+        enabled: true,
+      },
+    },
   },
   defaultNetwork: "localhost",
   networks: {
@@ -44,19 +43,27 @@ module.exports = {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${config.alchemy_rink}`,
       accounts: [`0x${config.test_key}`],
     },
+    optimisticKovan: {
+      url: `https://opt-kovan.g.alchemy.com/v2/${config.alchemy_op_kovan}`,
+      accounts: [`0x${config.test_key}`],
+    },
+    optimism: {
+      url: `https://opt-mainnet.g.alchemy.com/v2/${config.alchemy_op}`,
+      accounts: [`0x${config.test_key}`],
+    },
   },
   abiExporter: {
-    path: './abis',
+    path: "./abis",
     clear: true,
     flat: true,
-    spacing: 2
+    spacing: 2,
   },
   gasReporter: {
-    currency: 'USD',
+    currency: "USD",
     gasPrice: 80,
-    coinmarketcap: config.coinmarketcap
+    coinmarketcap: config.coinmarketcap,
   },
   etherscan: {
-    apiKey: config.etherscan
-  }
+    apiKey: config.etherscan,
+  },
 };
