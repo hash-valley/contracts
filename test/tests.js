@@ -262,7 +262,7 @@ describe("Hash Valley tests", function () {
       );
     });
 
-    it.only("sprinkler means you don't have to water", async () => {
+    it("sprinkler means you don't have to water", async () => {
       await vineyard.connect(accounts[1]).buySprinkler(0, {
         value: ethers.utils.parseEther("0.01"),
       });

@@ -60,7 +60,7 @@ module.exports = {
   },
   gasReporter: {
     currency: "USD",
-    gasPrice: 80,
+    gasPrice: 50,
     coinmarketcap: config.coinmarketcap,
   },
   etherscan: {
