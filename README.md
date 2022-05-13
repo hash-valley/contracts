@@ -1,6 +1,6 @@
 # HashValley Winery Contracts
 
-An idle NFT game where you larp as a Gentleman Vinter
+An idle NFT game where you play as a Gentleman Vinter
 
 [Full Docs](https://inathan-m.gitbook.io/hash-valley-winery/)
 
