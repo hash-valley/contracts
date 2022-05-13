@@ -287,13 +287,15 @@ contract WineBottle is ERC721, Ownable, VotableUri {
 
         string memory json = string.concat(
             string.concat(
-                '{"name": "Hash Valley Winery Bottle ',
+                '{"name": "Hash Valley Wine Bottle ',
                 UriUtils.uint2str(_tokenId),
                 '", "external_url": "',
                 baseUri,
                 "/bottle/",
                 UriUtils.uint2str(_tokenId),
-                '", "description": "A wine bottle...", "image": "',
+                '", "image": "ipfs://QmU6e3sS9HJYmg9UV3h51h8WzhT1yrAMcNQnvWqWyLDhPM/',
+                UriUtils.uint2str(attr[0]),
+                '.png", "description": "A wine bottle...", "animation_url": "',
                 imgVersions[_version]
             ),
             string.concat(
@@ -316,22 +318,22 @@ contract WineBottle is ERC721, Ownable, VotableUri {
                 '", "attributes": [',
                 string.concat(
                     '{"trait_type": "Type", "value": "',
-                    UriUtils.uint2str(attr[0]),
+                    typeNames[attr[0]],
                     '"},'
                 ),
                 string.concat(
                     '{"trait_type": "Subtype", "value": "',
-                    UriUtils.uint2str(attr[1]),
+                    getSubtype(attr[0], attr[1]),
                     '"},'
                 ),
                 string.concat(
                     '{"trait_type": "Note", "value": "',
-                    UriUtils.uint2str(attr[2]),
+                    getNote(attr[0], attr[1], attr[2]),
                     '"},'
                 ),
                 string.concat(
                     '{"trait_type": "Name", "value": "',
-                    UriUtils.uint2str(attr[3]),
+                    getName(attr[0], attr[1], attr[2], attr[3]),
                     '"},'
                 ),
                 string.concat(
@@ -341,7 +343,7 @@ contract WineBottle is ERC721, Ownable, VotableUri {
                 ),
                 "]"
             ),
-            '}'
+            "}"
         );
 
         string memory output = string.concat(
@@ -350,5 +352,263 @@ contract WineBottle is ERC721, Ownable, VotableUri {
         );
 
         return output;
+    }
+
+    string[4] typeNames = ["Red", "White", "Rose", "Sparkling"];
+
+    string[10] subTypeNames = [
+        "Fruity Dry Red",
+        "Herbal Dry Red",
+        "Sweet Red",
+        "Dry White",
+        "Sweet White",
+        "Dry Rose",
+        "Off Dry Rose",
+        "White",
+        "Red",
+        "Rose"
+    ];
+
+    function getSubtype(uint256 _type, uint256 _subtype)
+        public
+        view
+        returns (string memory)
+    {
+        uint256 offset;
+        for (uint8 i; i < _type; i++) offset += wineSubtypes[i];
+        return subTypeNames[offset + _subtype];
+    }
+
+    string[28] noteNames = [
+        "Blueberry Blackberry",
+        "Black Cherry Rasberry",
+        "Strawberry Cherry",
+        "Tart Cherry Cranberry",
+        "Clay and Cured Meats",
+        "Truffle & Forest",
+        "Smoke Tobacco Leather",
+        "Black Pepper Gravel",
+        "Sweet Red",
+        "Light Grapefruit Floral",
+        "Light Citrus Lemon",
+        "Light Herbal Grassy",
+        "Rich Creamy Nutty",
+        "Medium Perfume Floral",
+        "Off-Dry Apricots Peaches",
+        "Sweet Tropical Honey",
+        "Herbal Savory",
+        "Fruity Floral",
+        "Off Dry Rose",
+        "Dry Creamy Rich",
+        "Dry Light Citrus",
+        "Off Dry Floral",
+        "Sweet Apricots Rich",
+        "Dry Raspberry Blueberry",
+        "Sweet Blueberry Cherry",
+        "Off Dry Raspberry Cherry",
+        "Dry Strawberry Floral",
+        "Off Dry Strawberry Orange"
+    ];
+
+    function getNote(
+        uint256 _type,
+        uint256 _subtype,
+        uint256 _note
+    ) public view returns (string memory) {
+        uint256 offset;
+        for (uint8 i; i <= _type; i++) {
+            for (uint8 j; j < wineNotes[i].length; j++) {
+                if (i == _type && j == _subtype) {
+                    return noteNames[offset + _note];
+                } else {
+                    offset += wineNotes[i][j];
+                }
+            }
+        }
+    }
+
+    string[162] nameNames = [
+        "Shiraz",
+        "Monastrell",
+        "Mencia",
+        "Nero Buono",
+        "Petit Verdot",
+        "Pinotage",
+        "Cabernet Suavignon",
+        "Merlot",
+        "Super Tuscan",
+        "Amarone",
+        "Valpolicalla",
+        "Cabernet France",
+        "Sangiovese",
+        "Priorat",
+        "Garnacha",
+        "Pinot Nior",
+        "Carmenere",
+        "Primitivo",
+        "Counoise",
+        "Barbera",
+        "Grenache",
+        "Zweigelt",
+        "Gamay",
+        "Blaufrankisch",
+        "St. Laurent",
+        "Spatburgunder",
+        "Barolo",
+        "Barbaresco",
+        "Chianti",
+        "Vacqueyras",
+        "Gigondas",
+        "Brunello di Montalcino",
+        "Bourgogne",
+        "Dolcetto",
+        "Grignolino",
+        "Barbera",
+        "Beaujolais",
+        "Taurasi",
+        "Cahors",
+        "Rioja",
+        "Aglianico",
+        "Graves",
+        "Rioja",
+        "Pessac-Leognan",
+        "Cahors",
+        "Medoc",
+        "Sagrantino",
+        "Tannat",
+        "Pauillac",
+        "Saint-Julien",
+        "Chinon",
+        "Lagrein",
+        "Hermitage",
+        "Bandol",
+        "Cotes de Castillon",
+        "Fronsac",
+        "Rhone",
+        "Recioto della Valpolicella",
+        "Occhio di Pernice",
+        "Freisa",
+        "Cortese",
+        "Vermentino",
+        "Moschofilero",
+        "Verdicchio",
+        "Orvieto",
+        "Pinot Blanc",
+        "Greco di Tufo",
+        "Chablis",
+        "Picpoul",
+        "Garganega",
+        "Fiano",
+        "Muscadet",
+        "Assyrtiko",
+        "Silvaner",
+        "Albarino",
+        "Pouilly Fume",
+        "Entre-deux-Mers",
+        "Ugni Blanc",
+        "Touraine",
+        "Sauvignon Blanc",
+        "Chevemy",
+        "Verdejo",
+        "Chardonnay",
+        "Montrachet",
+        "Macconais",
+        "Soave",
+        "pessac-Leognan",
+        "Savennieres",
+        "Antao Vaz",
+        "Cote de Beaune",
+        "Torrontes",
+        "Vouvray Sec",
+        "Malvasiz Secco",
+        "Condrieu",
+        "Roussanne",
+        "Tokaji",
+        "Viognier",
+        "Fiano",
+        "Marsanne",
+        "Chenin Blanc",
+        "Spatlese",
+        "Kaniett",
+        "Demi-sec",
+        "Gewurztraminer",
+        "Muller-Thurgau",
+        "Late Harvest",
+        "Muscat Blanc",
+        "Aboccato",
+        "Sauternes",
+        "Auslese",
+        "Moelleux",
+        "Loire Rose",
+        "Bandol Rose",
+        "Cabernet Franc Rose",
+        "Syrah Rose",
+        "Cabernet Sauvignon Rose",
+        "Pinot Noir Rose",
+        "Grenache Rose",
+        "Provence Rose",
+        "Sangiovese Rose",
+        "Rosado",
+        "Tavel",
+        "Blush",
+        "Merlot",
+        "Zinfandel",
+        "Vin Gris",
+        "Garnacha Rosado",
+        "Rose d' Anjou",
+        "Vintage Champagne",
+        "Blance de Noirs",
+        "Blanc de Blancs",
+        "Metodo Classico",
+        "Brut Nature",
+        "Sec",
+        "Cava",
+        "Brut",
+        "Extra-Brut",
+        "Metodo Classico",
+        "Proseco Extra-Brut",
+        "Champagne Extra Dry",
+        "Proseco",
+        "Sparkling Riesling",
+        "Valdobbiadene",
+        "Malvasia Secco",
+        "Moscato d'Asti",
+        "Vouvray Mousseux",
+        "Demi-Sec",
+        "Doux",
+        "Asti Spumante",
+        "Lambrusco Spumante",
+        "Lambrusco Secco",
+        "Sparkling Shiraz",
+        "Brachetto d'Acqui",
+        "Lambrusco Dolce",
+        "Lambrusco Amabile",
+        "Brachetto d'Acqui",
+        "Champagne Rose",
+        "Cremant Rose",
+        "Cava Rose Brut",
+        "Moscato Rose",
+        "Brachetto d'Acqui Rose",
+        "Cava Rose"
+    ];
+
+    function getName(
+        uint256 _type,
+        uint256 _subtype,
+        uint256 _note,
+        uint256 _name
+    ) public view returns (string memory) {
+        uint256 offset;
+        for (uint8 i; i <= _type; i++) {
+            for (uint8 j; j < wineTypes[i].length; j++) {
+                for (uint8 k; k < wineTypes[i][j].length; k++) {
+                    if (i == _type && j == _subtype && k == _note) {
+                        return nameNames[offset + _name];
+                    } else {
+                        offset += wineTypes[i][j][k];
+                    }
+                }
+            }
+        }
     }
 }

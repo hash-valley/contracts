@@ -386,7 +386,9 @@ contract Vineyard is ERC721, Ownable, VotableUri {
                 baseUri,
                 "/vineyard/",
                 UriUtils.uint2str(_tokenId),
-                '", "description": "A vineyard...", "image": "'
+                '", "image": "ipfs://QmWUApcw8j6nBXBJK4EAda3BttEPF6FKSLfGgc6W8XtPgA/',
+                UriUtils.uint2str(attr[0]),
+                '.png", "description": "A vineyard...", "animation_url": "'
             ),
             string.concat(
                 imgVersions[_version],
@@ -410,7 +412,7 @@ contract Vineyard is ERC721, Ownable, VotableUri {
                 '", "attributes": [',
                 string.concat(
                     '{"trait_type": "Location", "value": "',
-                    UriUtils.uint2str(attr[0]),
+                    locationNames[attr[0]],
                     '"},'
                 ),
                 string.concat(
@@ -420,7 +422,7 @@ contract Vineyard is ERC721, Ownable, VotableUri {
                 ),
                 string.concat(
                     '{"trait_type": "Soil Type", "value": "',
-                    UriUtils.uint2str(attr[3]),
+                    soilNames[attr[3]],
                     '"},'
                 ),
                 string.concat(
@@ -442,7 +444,7 @@ contract Vineyard is ERC721, Ownable, VotableUri {
                 ),
                 "]"
             ),
-            '}'
+            "}"
         );
 
         string memory output = string.concat(
@@ -452,4 +454,24 @@ contract Vineyard is ERC721, Ownable, VotableUri {
 
         return output;
     }
+
+    string[15] locationNames = [
+        "Amsterdam",
+        "Tokyo",
+        "Napa Valley",
+        "Denali",
+        "Madeira",
+        "Kashmere",
+        "Outback",
+        "Siberia",
+        "Mt. Everest",
+        "Amazon Basin",
+        "Ohio",
+        "Borneo",
+        "Fujian Province",
+        "Long Island",
+        "Champagne"
+    ];
+
+    string[6] soilNames = ["Rocky", "Sandy", "Clay", "Boggy", "Peaty", "Mulch"];
 }
