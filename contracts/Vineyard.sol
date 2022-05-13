@@ -384,9 +384,7 @@ contract Vineyard is ERC721, Ownable, VotableUri {
                 UriUtils.uint2str(_tokenId),
                 '", "external_url": "',
                 baseUri,
-                "/api/vine?version=",
-                UriUtils.uint2str(_version),
-                "&token=",
+                "/vineyard/",
                 UriUtils.uint2str(_tokenId),
                 '", "description": "A vineyard...", "image": "'
             ),
@@ -406,9 +404,45 @@ contract Vineyard is ERC721, Ownable, VotableUri {
                 '"seller_fee_basis_points": ',
                 UriUtils.uint2str(sellerFee),
                 ', "fee_recipient": "0x',
-                UriUtils.toAsciiString(artists[_version]),
-                '"}'
-            )
+                UriUtils.toAsciiString(artists[_version])
+            ),
+            string.concat(
+                '", "attributes": [',
+                string.concat(
+                    '{"trait_type": "Location", "value": "',
+                    UriUtils.uint2str(attr[0]),
+                    '"},'
+                ),
+                string.concat(
+                    '{"trait_type": "Elevation", "value": "',
+                    UriUtils.uint2str(attr[1]),
+                    '"},'
+                ),
+                string.concat(
+                    '{"trait_type": "Soil Type", "value": "',
+                    UriUtils.uint2str(attr[3]),
+                    '"},'
+                ),
+                string.concat(
+                    '{"trait_type": "Xp", "value": "',
+                    UriUtils.uint2str(xp[_tokenId]),
+                    '"},'
+                ),
+                string.concat(
+                    '{"trait_type": "Streak", "value": "',
+                    UriUtils.uint2str(streak[_tokenId]),
+                    '"},'
+                ),
+                string.concat(
+                    '{"trait_type": "Sprinkler", "value": "',
+                    sprinkler[_tokenId] + 156 weeks < block.timestamp
+                        ? "true"
+                        : "false",
+                    '"}'
+                ),
+                "]"
+            ),
+            '}'
         );
 
         string memory output = string.concat(

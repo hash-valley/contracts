@@ -291,9 +291,7 @@ contract WineBottle is ERC721, Ownable, VotableUri {
                 UriUtils.uint2str(_tokenId),
                 '", "external_url": "',
                 baseUri,
-                "/api/bottle?version=",
-                UriUtils.uint2str(_version),
-                "&token=",
+                "/bottle/",
                 UriUtils.uint2str(_tokenId),
                 '", "description": "A wine bottle...", "image": "',
                 imgVersions[_version]
@@ -309,12 +307,41 @@ contract WineBottle is ERC721, Ownable, VotableUri {
                 UriUtils.uint2str(attr[3]),
                 "-",
                 UriUtils.uint2str(bottleAge(_tokenId)),
-                '"seller_fee_basis_points": ',
+                '", "seller_fee_basis_points": ',
                 UriUtils.uint2str(sellerFee),
                 ', "fee_recipient": "0x',
-                UriUtils.toAsciiString(artists[_version]),
-                '"}'
-            )
+                UriUtils.toAsciiString(artists[_version])
+            ),
+            string.concat(
+                '", "attributes": [',
+                string.concat(
+                    '{"trait_type": "Type", "value": "',
+                    UriUtils.uint2str(attr[0]),
+                    '"},'
+                ),
+                string.concat(
+                    '{"trait_type": "Subtype", "value": "',
+                    UriUtils.uint2str(attr[1]),
+                    '"},'
+                ),
+                string.concat(
+                    '{"trait_type": "Note", "value": "',
+                    UriUtils.uint2str(attr[2]),
+                    '"},'
+                ),
+                string.concat(
+                    '{"trait_type": "Name", "value": "',
+                    UriUtils.uint2str(attr[3]),
+                    '"},'
+                ),
+                string.concat(
+                    '{"trait_type": "Era", "value": "',
+                    bottleEra(_tokenId),
+                    '"}'
+                ),
+                "]"
+            ),
+            '}'
         );
 
         string memory output = string.concat(
