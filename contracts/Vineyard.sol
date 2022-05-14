@@ -42,7 +42,7 @@ contract Vineyard is ERC721, VotableUri {
     string public baseUri;
     uint16 public immutable sellerFee = 750;
 
-    uint16[3][15] internal mintReqs;
+    uint16[3][15] private mintReqs;
     uint8[15] public climates;
 
     // EVENTS
@@ -125,22 +125,26 @@ contract Vineyard is ERC721, VotableUri {
     function newVineyards(uint16[] calldata _tokenAttributes) public payable {
         // first 100 free
         if (totalSupply >= 100) {
-            require(msg.value >= 0.05 ether, "Value below price");
+            require(msg.value >= 0.06 ether, "Value below price");
         }
 
-        _mintVineyard(_tokenAttributes);
+        _mintVineyard(_tokenAttributes, false);
     }
 
     /// @notice mints a new vineyard for free by burning a giveaway token
     function newVineyardGiveaway(uint16[] calldata _tokenAttributes) public {
         IGiveawayToken(addressStorage.giveawayToken()).burnOne();
-        _mintVineyard(_tokenAttributes);
+        _mintVineyard(_tokenAttributes, true);
     }
 
-    /// @notice internal vineyard minting function
-    function _mintVineyard(uint16[] calldata _tokenAttributes) internal {
+    /// @notice private vineyard minting function
+    function _mintVineyard(uint16[] calldata _tokenAttributes, bool giveaway)
+        private
+    {
         uint256 tokenId = totalSupply;
-        require(tokenId + 1 < maxVineyards, "Max vineyards minted");
+        if (!giveaway) {
+            require(tokenId < maxVineyards, "Max vineyards minted");
+        }
 
         validateAttributes(_tokenAttributes);
 

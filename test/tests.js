@@ -91,7 +91,7 @@ describe("Hash Valley tests", function () {
       expect(await vineyard.owner()).to.equal(royalty.address);
     });
 
-    it("first 100 are free, 0.05 eth after that", async () => {
+    it("first 100 are free, 0.06 eth after that", async () => {
       for (let i = 0; i < 100; i++) {
         const tx = await vineyard
           .connect(accounts[1])
@@ -112,13 +112,51 @@ describe("Hash Valley tests", function () {
 
       const tx = await vineyard
         .connect(accounts[1])
-        .newVineyards([4, 2, 0, 4], { value: ethers.utils.parseEther("0.05") });
+        .newVineyards([4, 2, 0, 4], { value: ethers.utils.parseEther("0.06") });
       expect(tx)
         .to.emit(vineyard, "Transfer")
         .withArgs(
           "0x0000000000000000000000000000000000000000",
           accounts[1].address,
           100
+        );
+    });
+
+    it("use giveaway token", async () => {
+      const tx = await vineyard.newVineyardGiveaway([4, 2, 0, 4]);
+      expect(tx)
+        .to.emit(vineyard, "Transfer")
+        .withArgs(
+          "0x0000000000000000000000000000000000000000",
+          accounts[0].address,
+          0
+        );
+      await expect(
+        vineyard.connect(accounts[1]).newVineyardGiveaway([4, 2, 0, 4])
+      ).to.be.revertedWith("ERC20: burn amount exceeds balance");
+    });
+
+    it.skip("use giveaway token with max supply", async () => {
+      const max = Number(await vineyard.maxVineyards());
+      for (let i = 0; i < max; i++) {
+        await vineyard.newVineyards([4, 2, 0, 4], {
+          value: ethers.utils.parseEther("0.06"),
+        });
+      }
+
+      await expect(
+        vineyard.newVineyards([4, 2, 0, 4], {
+          value: ethers.utils.parseEther("0.06"),
+        })
+      ).to.be.revertedWith("Max vineyards minted");
+
+      const tx = await vineyard.newVineyardGiveaway([4, 2, 0, 4]);
+      expect(tx)
+        .to.emit(vineyard, "Transfer")
+        .withArgs(
+          "0x0000000000000000000000000000000000000000",
+          accounts[0].address,
+          5500
         );
     });
 
