@@ -2,24 +2,23 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IAddressStorage.sol";
+import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
-contract AddressStorage is IAddressStorage {
+contract AddressStorage is IAddressStorage, Ownable {
     address public override cellar;
     address public override vinegar;
     address public override vineyard;
     address public override bottle;
     address public override giveawayToken;
+    address public override royaltyManager;
 
     bool private addressesSet = false;
-    address private deployer;
 
     // EVENTS
     event AddressesSet();
 
     // CONSTRUCTOR
-    constructor() {
-        deployer = msg.sender;
-    }
+    constructor() Ownable() {}
 
     // PUBLIC FUNCTIONS
     /// @notice sets addresses for ecosystem
@@ -28,16 +27,23 @@ contract AddressStorage is IAddressStorage {
         address _vinegar,
         address _vineyard,
         address _bottle,
-        address _giveawayToken
+        address _giveawayToken,
+        address _royaltyManager
     ) public {
         require(addressesSet == false, "already set");
-        require(msg.sender == deployer, "not deployer");
+        require(msg.sender == owner(), "not deployer");
         cellar = _cellar;
         vinegar = _vinegar;
         vineyard = _vineyard;
         bottle = _bottle;
         giveawayToken = _giveawayToken;
+        royaltyManager = _royaltyManager;
         addressesSet = true;
+        emit AddressesSet();
+    }
+
+    function newRoyaltyManager(address _royaltyManager) external onlyOwner {
+        royaltyManager = _royaltyManager;
         emit AddressesSet();
     }
 }

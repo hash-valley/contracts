@@ -13,11 +13,11 @@
 pragma solidity ^0.8.12;
 
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "./UriUtils.sol";
 import "./Randomness.sol";
 import "./VotableUri.sol";
 import "./interfaces/IVinegar.sol";
+import "./interfaces/IRoyaltyManager.sol";
 
 interface ICellar {
     function cellarTime(uint256 _tokenID) external view returns (uint256);
@@ -32,7 +32,8 @@ interface IVineyard {
     function getClimate(uint256 _tokenId) external view returns (uint8);
 }
 
-contract WineBottle is ERC721, Ownable, VotableUri {
+contract WineBottle is ERC721, VotableUri {
+    address private deployer;
     uint256 public totalSupply;
     uint256 public lastId = 0;
     mapping(uint256 => uint256) public bottleMinted;
@@ -63,6 +64,7 @@ contract WineBottle is ERC721, Ownable, VotableUri {
         ERC721("Hash Valley Vintage", "VNTG")
         VotableUri(_addressStorage, _imgUri)
     {
+        deployer = _msgSender();
         setBaseURI(_baseUri);
         eraBounds = _eraBounds;
 
@@ -125,10 +127,25 @@ contract WineBottle is ERC721, Ownable, VotableUri {
         wineTypes[3][2].push(3);
     }
 
+    // called once to init royalties
+    bool private inited = false;
+
+    function initR() external {
+        require(!inited);
+        IRoyaltyManager(addressStorage.royaltyManager()).updateRoyalties(
+            _msgSender()
+        );
+        inited = true;
+    }
+
+    function owner() public view returns (address) {
+        return addressStorage.royaltyManager();
+    }
+
     // PUBLIC FUNCTIONS
     /// @notice burns a wine bottle token
     function burn(uint256 tokenId) public {
-        require(msg.sender == addressStorage.cellar(), "only cellar");
+        require(_msgSender() == addressStorage.cellar(), "only cellar");
         _burn(tokenId);
         totalSupply -= 1;
     }
@@ -178,7 +195,7 @@ contract WineBottle is ERC721, Ownable, VotableUri {
         address cellar = addressStorage.cellar();
         uint256 cellarTime = ICellar(cellar).cellarTime(_oldTokenId);
         IVinegar(addressStorage.vinegar()).burn(
-            msg.sender,
+            _msgSender(),
             (3 * cellarAged(cellarTime)) * 1e18
         );
 
@@ -198,7 +215,7 @@ contract WineBottle is ERC721, Ownable, VotableUri {
         returns (uint256)
     {
         address vineyard = addressStorage.vineyard();
-        require(msg.sender == vineyard, "Can only be called by Vineyard");
+        require(_msgSender() == vineyard, "Only Vineyard");
 
         uint256 tokenID = totalSupply;
         bottleMinted[tokenID] = block.timestamp;
@@ -258,7 +275,11 @@ contract WineBottle is ERC721, Ownable, VotableUri {
     }
 
     // URI
-    function setBaseURI(string memory _baseUri) public onlyOwner {
+    function setBaseURI(string memory _baseUri) public {
+        require(
+            _msgSender() == deployer || _msgSender() == owner(),
+            "!deployer"
+        );
         baseUri = _baseUri;
     }
 
@@ -284,7 +305,7 @@ contract WineBottle is ERC721, Ownable, VotableUri {
         );
 
         uint8[] memory attr = attributes[_tokenId];
-
+        string memory age = UriUtils.uint2str(bottleAge(_tokenId));
         string memory json = string.concat(
             string.concat(
                 '{"name": "Hash Valley Wine Bottle ',
@@ -308,7 +329,7 @@ contract WineBottle is ERC721, Ownable, VotableUri {
                 "-",
                 UriUtils.uint2str(attr[3]),
                 "-",
-                UriUtils.uint2str(bottleAge(_tokenId)),
+                age,
                 '", "seller_fee_basis_points": ',
                 UriUtils.uint2str(sellerFee),
                 ', "fee_recipient": "0x',
@@ -339,8 +360,9 @@ contract WineBottle is ERC721, Ownable, VotableUri {
                 string.concat(
                     '{"trait_type": "Era", "value": "',
                     bottleEra(_tokenId),
-                    '"}'
+                    '"},'
                 ),
+                string.concat('{"trait_type": "Age", "value": "', age, '"}'),
                 "]"
             ),
             "}"
@@ -425,6 +447,7 @@ contract WineBottle is ERC721, Ownable, VotableUri {
                 }
             }
         }
+        return "";
     }
 
     string[162] nameNames = [
@@ -610,5 +633,6 @@ contract WineBottle is ERC721, Ownable, VotableUri {
                 }
             }
         }
+        return "";
     }
 }

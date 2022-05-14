@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./interfaces/IWineBottle.sol";
 import "./interfaces/IAddressStorage.sol";
 import "./interfaces/IVinegar.sol";
+import "./interfaces/IRoyaltyManager.sol";
 
 contract VotableUri {
     uint256 public startTimestamp;
@@ -110,6 +111,10 @@ contract VotableUri {
         imgVersionCount += 1;
         settled = true;
         IVinegar(addressStorage.vinegar()).voteReward(artist);
+
+        IRoyaltyManager(addressStorage.royaltyManager()).updateRoyalties(
+            artist
+        );
         emit Complete(startTimestamp, newUri, artist);
     }
 }

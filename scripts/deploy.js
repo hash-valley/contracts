@@ -1,11 +1,20 @@
 const hre = require("hardhat");
 const config = require("../config");
+const fs = require("fs");
 
 async function deploy() {
   const Storage = await hre.ethers.getContractFactory("AddressStorage");
   const storage = await Storage.deploy();
   await storage.deployed();
   console.log("Address Storage deployed to:", storage.address);
+
+  const Royalty = await hre.ethers.getContractFactory("RoyaltyManager");
+  const royalty = await Royalty.deploy(
+    storage.address,
+    "0x6749aB437cd8803ecCC3aD707F969298Cda65921"
+  );
+  await royalty.deployed();
+  console.log("Royalty Manager deployed to:", royalty.address);
 
   const Vineyard = await hre.ethers.getContractFactory("Vineyard");
   const vineyard = await Vineyard.deploy(
@@ -48,8 +57,29 @@ async function deploy() {
     vinegar.address,
     vineyard.address,
     bottle.address,
-    give.address
+    give.address,
+    royalty.address
   );
+
+  await vineyard.initR();
+  await bottle.initR();
+
+  const data = JSON.stringify({
+    vine_address: vineyard.address,
+    cellar_address: cellar.address,
+    bottle_address: bottle.address,
+    vinegar_address: vinegar.address,
+    giveaway_address: give.address,
+    address_storage_address: storage.address,
+    royalth_address: royalty.address
+  }, null, 2);
+
+  fs.writeFileSync("deployment.json", data, (err) => {
+    if (err) {
+      throw err;
+    }
+    console.log("JSON data is saved.");
+  });
 }
 
 // We recommend this pattern to be able to use async/await everywhere

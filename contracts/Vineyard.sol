@@ -12,8 +12,8 @@
 pragma solidity ^0.8.12;
 
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IWineBottle.sol";
+import "./interfaces/IRoyaltyManager.sol";
 import "./UriUtils.sol";
 import "./VotableUri.sol";
 
@@ -21,7 +21,8 @@ interface IGiveawayToken {
     function burnOne() external;
 }
 
-contract Vineyard is ERC721, Ownable, VotableUri {
+contract Vineyard is ERC721, VotableUri {
+    address private deployer;
     uint256 public totalSupply;
     uint256 public immutable firstSeasonLength = 3 weeks;
     uint256 public immutable seasonLength = 12 weeks;
@@ -68,6 +69,7 @@ contract Vineyard is ERC721, Ownable, VotableUri {
         ERC721("Hash Valley Vineyard", "VNYD")
         VotableUri(_addressStorage, _imgUri)
     {
+        deployer = _msgSender();
         setBaseURI(_baseUri);
         addressStorage = IAddressStorage(_addressStorage);
 
@@ -78,27 +80,42 @@ contract Vineyard is ERC721, Ownable, VotableUri {
         climates = _climates;
     }
 
+    // called once to init royalties
+    bool private inited = false;
+
+    function initR() external {
+        require(!inited);
+        IRoyaltyManager(addressStorage.royaltyManager()).updateRoyalties(
+            _msgSender()
+        );
+        inited = true;
+    }
+
+    function owner() public view returns (address) {
+        return addressStorage.royaltyManager();
+    }
+
     /// @notice validates minting attributes
     function validateAttributes(uint16[] calldata _tokenAttributes)
         public
         view
         returns (bool)
     {
-        require(_tokenAttributes.length == 4, "Incorrect number of params");
-        require(_tokenAttributes[0] <= 14, "invalid 1st param");
+        require(_tokenAttributes.length == 4, "wrong #params");
+        require(_tokenAttributes[0] <= 14, "inv 1st param");
         uint256 lower = mintReqs[_tokenAttributes[0]][0];
         uint256 upper = mintReqs[_tokenAttributes[0]][1];
         require(
             _tokenAttributes[1] >= lower && _tokenAttributes[1] <= upper,
-            "Invalid 2nd param"
+            "inv 2nd param"
         );
         require(
             _tokenAttributes[2] == 0 || _tokenAttributes[2] == 1,
-            "Invalid third attribute"
+            "inv 3rd param"
         );
         if (_tokenAttributes[2] == 1)
             require(mintReqs[_tokenAttributes[0]][2] == 1, "3rd cant be 1");
-        require(_tokenAttributes[3] <= 5, "Invalid 4th param");
+        require(_tokenAttributes[3] <= 5, "inv 4th param");
         return true;
     }
 
@@ -123,14 +140,11 @@ contract Vineyard is ERC721, Ownable, VotableUri {
     /// @notice internal vineyard minting function
     function _mintVineyard(uint16[] calldata _tokenAttributes) internal {
         uint256 tokenId = totalSupply;
-        require(
-            tokenId + 1 < maxVineyards,
-            "Maximum number of vineyards have been minted"
-        );
+        require(tokenId + 1 < maxVineyards, "Max vineyards minted");
 
         validateAttributes(_tokenAttributes);
 
-        _safeMint(msg.sender, tokenId);
+        _safeMint(_msgSender(), tokenId);
         tokenAttributes[tokenId] = _tokenAttributes;
         totalSupply += 1;
 
@@ -171,14 +185,16 @@ contract Vineyard is ERC721, Ownable, VotableUri {
 
     // LOGISTICS
     /// @notice marks game as started triggering the first planting season to begin
-    function start() public onlyOwner {
+    function start() public {
+        require(_msgSender() == deployer, "!deployer");
         require(gameStart == 0, "Game already started");
         gameStart = block.timestamp;
         emit Start(uint48(block.timestamp));
     }
 
     /// @notice withdraws sale proceeds
-    function withdrawAll() public payable onlyOwner {
+    function withdrawAll() public payable {
+        require(_msgSender() == deployer, "!deployer");
         require(payable(_msgSender()).send(address(this).balance));
     }
 
@@ -351,7 +367,11 @@ contract Vineyard is ERC721, Ownable, VotableUri {
     }
 
     // URI
-    function setBaseURI(string memory _baseUri) public onlyOwner {
+    function setBaseURI(string memory _baseUri) public {
+        require(
+            _msgSender() == deployer || _msgSender() == owner(),
+            "!deployer"
+        );
         baseUri = _baseUri;
     }
 
@@ -437,7 +457,7 @@ contract Vineyard is ERC721, Ownable, VotableUri {
                 ),
                 string.concat(
                     '{"trait_type": "Sprinkler", "value": "',
-                    sprinkler[_tokenId] + 156 weeks < block.timestamp
+                    sprinkler[_tokenId] + 156 weeks > block.timestamp
                         ? "true"
                         : "false",
                     '"}'

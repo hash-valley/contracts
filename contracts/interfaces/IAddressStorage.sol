@@ -11,4 +11,6 @@ interface IAddressStorage {
     function bottle() external view returns (address);
 
     function giveawayToken() external view returns (address);
+
+    function royaltyManager() external view returns (address);
 }

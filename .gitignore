@@ -9,3 +9,5 @@ abis
 .DS_Store
 
 config.json
+
+deployment.json

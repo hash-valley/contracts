@@ -11,12 +11,22 @@ describe("Hash Valley tests", function () {
   let vinegar;
   let token;
   let storage;
+  let royalty;
+  let quixotic;
   let provider;
 
   const deploy = async () => {
+    const Quixotic = await hre.ethers.getContractFactory("DummyQuixotic");
+    quixotic = await Quixotic.deploy();
+    await quixotic.deployed();
+
     const Storage = await hre.ethers.getContractFactory("AddressStorage");
     storage = await Storage.deploy();
     await storage.deployed();
+
+    const Royalty = await hre.ethers.getContractFactory("RoyaltyManager");
+    royalty = await Royalty.deploy(storage.address, quixotic.address);
+    await royalty.deployed();
 
     const Cellar = await hre.ethers.getContractFactory("Cellar");
     cellar = await Cellar.deploy(storage.address);
@@ -54,8 +64,12 @@ describe("Hash Valley tests", function () {
       vinegar.address,
       vineyard.address,
       bottle.address,
-      token.address
+      token.address,
+      royalty.address
     );
+
+    await vineyard.initR();
+    await bottle.initR();
 
     accounts = await ethers.getSigners();
     provider = await ethers.getDefaultProvider();
@@ -73,8 +87,8 @@ describe("Hash Valley tests", function () {
       expect(await storage.vinegar()).to.equal(vinegar.address);
     });
 
-    it("Owner set correctly", async () => {
-      expect(await vineyard.owner()).to.equal(accounts[0].address);
+    it("Owner set to royalty manager", async () => {
+      expect(await vineyard.owner()).to.equal(royalty.address);
     });
 
     it("first 100 are free, 0.05 eth after that", async () => {
@@ -111,17 +125,17 @@ describe("Hash Valley tests", function () {
     it("Correct number of params", async () => {
       await expect(
         vineyard.connect(accounts[1]).newVineyards([1, 2, 3, 4, 5])
-      ).to.be.revertedWith("Incorrect number of params");
+      ).to.be.revertedWith("wrong #params");
 
       await expect(
         vineyard.connect(accounts[1]).newVineyards([1, 2, 3])
-      ).to.be.revertedWith("Incorrect number of params");
+      ).to.be.revertedWith("wrong #params");
     });
 
     it("Third attribute must be 0 or 1", async () => {
       await expect(
         vineyard.connect(accounts[1]).newVineyards([4, 2, 3, 4])
-      ).to.be.revertedWith("Invalid third attribute");
+      ).to.be.revertedWith("inv 3rd param");
     });
 
     it("Only owner can withdraw", async () => {
@@ -129,7 +143,7 @@ describe("Hash Valley tests", function () {
 
       await expect(
         vineyard.connect(accounts[1]).withdrawAll()
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.revertedWith("!deployer");
 
       const tx = await vineyard.connect(accounts[0]).withdrawAll();
     });
@@ -861,6 +875,7 @@ describe("Hash Valley tests", function () {
       expect((await vinegar.balanceOf(newAddress)).toString()).to.equal(
         "1814400000000000000000000"
       );
+      expect(await quixotic.payouts(vineyard.address)).to.equal(newAddress);
 
       // bottle
       await bottle.suggest(0, newCid, newAddress);
@@ -875,6 +890,7 @@ describe("Hash Valley tests", function () {
       expect(await bottle.artists(1)).to.equal(newAddress);
       expect((await bottle.imgVersionCount()).toString()).to.equal("2");
       expect(await bottle.imgVersions(1)).to.equal(newCid);
+      expect(await quixotic.payouts(bottle.address)).to.equal(newAddress);
     });
 
     it("9 day total cooldown if passed and settled", async () => {
