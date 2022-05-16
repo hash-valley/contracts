@@ -29,18 +29,23 @@ contract Vinegar is ERC20 {
                 msg.sender == addressStorage.vineyard(),
             "invalid caller"
         );
-        _mint(recipient, 3 weeks * 1e18);
+        _mint(recipient, 500e18);
     }
 
     /// @notice mints tokens to recipient who spoiled their bottle
-    function spoilReward(address recipient, uint256 amount) external {
+    function spoilReward(address recipient, uint256 cellarAge) external {
         require(msg.sender == addressStorage.cellar(), "not cellar");
-        _mint(recipient, amount * 1e18);
+        _mint(recipient, ageToVinegar(cellarAge));
     }
 
     /// @notice burns the specified amount of tokens
-    function burn(address account, uint256 amount) external {
+    function rejuvenationCost(address account, uint256 cellarAge) external {
         require(msg.sender == addressStorage.bottle(), "Not Bottle");
-        _burn(account, amount);
+        _burn(account, 3 * ageToVinegar(cellarAge));
+    }
+
+    /// @notice conversion from seconds in cellar to vinegar tokens (wei)
+    function ageToVinegar(uint256 cellarAge) internal pure returns (uint256) {
+        return (cellarAge * 1e18) / 1 days;
     }
 }

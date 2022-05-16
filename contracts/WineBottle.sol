@@ -194,9 +194,9 @@ contract WineBottle is ERC721, VotableUri {
         require(attributes[_oldTokenId].length > 0, "cannot rejuve");
         address cellar = addressStorage.cellar();
         uint256 cellarTime = ICellar(cellar).cellarTime(_oldTokenId);
-        IVinegar(addressStorage.vinegar()).burn(
+        IVinegar(addressStorage.vinegar()).rejuvenationCost(
             _msgSender(),
-            (3 * cellarAged(cellarTime)) * 1e18
+            cellarAged(cellarTime)
         );
 
         uint256 tokenId = lastId + 1;

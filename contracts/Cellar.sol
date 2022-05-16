@@ -115,7 +115,7 @@ contract Cellar {
                 msg.sender,
                 IWineBottle(addressStorage.bottle()).cellarAged(
                     cellarTime(_tokenID)
-                ) * 1e18
+                )
             );
             IERC721(wineBottle).burn(_tokenID);
             emit Spoiled(_tokenID);

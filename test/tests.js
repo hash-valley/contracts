@@ -580,15 +580,28 @@ describe("Hash Valley tests", function () {
       await cellar.stake(0);
       await cellar.stake(1);
       await cellar.stake(2);
-      await ethers.provider.send("evm_increaseTime", [999999999999999]);
+      await ethers.provider.send("evm_increaseTime", [31104000]);
       await ethers.provider.send("evm_mine", []);
       await cellar.withdraw(0);
       await cellar.withdraw(1);
       await cellar.withdraw(2);
+
+      // vinegar received from one spoiled bottle
+      const oneYear = "4745000000000000000000000000000";
+      // vinegar received from three spoiled bottle
+      const threeYears = ethers.BigNumber.from(oneYear).mul(3).toString();
+
       const vinegarBalance = await vinegar.balanceOf(accounts[0].address);
-      expect(Number(vinegarBalance)).to.be.greaterThan(0);
+      // if all three bottles spoiled, this should pass
+      // if one of them didn't, the rest of this test will fail anyways
+      // in which case just run it again until the random numbers work out
+      // (only 5% chance of one of these bottles not spoiling)
+      expect(vinegarBalance.toString()).to.equal(threeYears);
 
       await expect(bottle.ownerOf(0)).to.be.revertedWith(
+        "ERC721: owner query for nonexistent token"
+      );
+      await expect(bottle.ownerOf(1)).to.be.revertedWith(
         "ERC721: owner query for nonexistent token"
       );
       await expect(bottle.ownerOf(2)).to.be.revertedWith(
@@ -597,7 +610,7 @@ describe("Hash Valley tests", function () {
 
       await bottle.rejuvenate(0);
       const newVinegarBalance = await vinegar.balanceOf(accounts[0].address);
-      expect(newVinegarBalance.lt(vinegarBalance)).to.equal(true);
+      expect(newVinegarBalance.toString()).to.equal("0");
 
       const newBottleOwner = await bottle.ownerOf(3);
       expect(newBottleOwner).to.equal(accounts[0].address);
@@ -911,7 +924,7 @@ describe("Hash Valley tests", function () {
       expect((await vineyard.imgVersionCount()).toString()).to.equal("2");
       expect(await vineyard.imgVersions(1)).to.equal(newCid);
       expect((await vinegar.balanceOf(newAddress)).toString()).to.equal(
-        "1814400000000000000000000"
+        "500000000000000000000"
       );
       expect(await quixotic.payouts(vineyard.address)).to.equal(newAddress);
 
