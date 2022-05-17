@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: Unlicensed
+//SPDX-License-Identifier: Viral Public License
 /**
          ___ .___ .______  ._______     ._______ ._______  _____.______._.___    ._______
 .___    |   |: __|:      \ : .____/     : __   / : .___  \ \__ _:|\__ _:||   |   : .____/
