@@ -19,7 +19,7 @@ async function deploy() {
   console.log("Royalty Manager deployed to:", royalty.address);
 
   const Merkle = await hre.ethers.getContractFactory("MerkleDiscount");
-  const merkle = await Merkle.deploy(config.miladyMerkleRoot, storage.address);
+  const merkle = await Merkle.deploy(config.discountMerkleRoot, storage.address);
   await merkle.deployed();
   console.log("MerkleDiscount deployed to:", merkle.address);
 
