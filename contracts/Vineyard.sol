@@ -21,6 +21,14 @@ interface IGiveawayToken {
     function burnOne() external;
 }
 
+interface IMerkleDiscount {
+    function claim(
+        uint256 index,
+        address account,
+        bytes32[] calldata merkleProof
+    ) external returns (bool);
+}
+
 contract Vineyard is ERC721, VotableUri {
     address private deployer;
     uint256 public totalSupply;
@@ -81,10 +89,10 @@ contract Vineyard is ERC721, VotableUri {
     }
 
     // called once to init royalties
-    bool private inited = false;
+    bool private inited;
 
     function initR() external {
-        require(!inited);
+        require(!inited, "!init");
         IRoyaltyManager(addressStorage.royaltyManager()).updateRoyalties(
             _msgSender()
         );
@@ -125,9 +133,25 @@ contract Vineyard is ERC721, VotableUri {
     function newVineyards(uint16[] calldata _tokenAttributes) public payable {
         // first 100 free
         if (totalSupply >= 100) {
-            require(msg.value >= 0.06 ether, "Value below price");
+            require(msg.value >= 0.07 ether, "Value below price");
         }
 
+        _mintVineyard(_tokenAttributes, false);
+    }
+
+    /// @notice mints a new vineyard with discount
+    /// @param _tokenAttributes array of attribute ints [location, elevation, elevationIsNegative (0 or 1), soilType]
+    function newVineyardsDiscount(
+        uint16[] calldata _tokenAttributes,
+        uint256 index,
+        bytes32[] calldata merkleProof
+    ) public payable {
+        require(totalSupply >= 100, "not yet");
+        require(msg.value >= 0.04 ether, "Value below price");
+        require(
+            IMerkleDiscount(addressStorage.merkle()).claim(index, _msgSender(), merkleProof),
+            "invalid claim"
+        );
         _mintVineyard(_tokenAttributes, false);
     }
 

@@ -128,10 +128,10 @@ contract WineBottle is ERC721, VotableUri {
     }
 
     // called once to init royalties
-    bool private inited = false;
+    bool private inited;
 
     function initR() external {
-        require(!inited);
+        require(!inited, "!init");
         IRoyaltyManager(addressStorage.royaltyManager()).updateRoyalties(
             _msgSender()
         );

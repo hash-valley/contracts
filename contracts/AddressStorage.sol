@@ -11,6 +11,7 @@ contract AddressStorage is IAddressStorage, Ownable {
     address public override bottle;
     address public override giveawayToken;
     address public override royaltyManager;
+    address public override merkle;
 
     bool private addressesSet = false;
 
@@ -28,7 +29,8 @@ contract AddressStorage is IAddressStorage, Ownable {
         address _vineyard,
         address _bottle,
         address _giveawayToken,
-        address _royaltyManager
+        address _royaltyManager,
+        address _merkle
     ) public {
         require(addressesSet == false, "already set");
         require(msg.sender == owner(), "not deployer");
@@ -38,6 +40,7 @@ contract AddressStorage is IAddressStorage, Ownable {
         bottle = _bottle;
         giveawayToken = _giveawayToken;
         royaltyManager = _royaltyManager;
+        merkle = _merkle;
         addressesSet = true;
         emit AddressesSet();
     }

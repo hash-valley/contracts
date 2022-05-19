@@ -13,4 +13,6 @@ interface IAddressStorage {
     function giveawayToken() external view returns (address);
 
     function royaltyManager() external view returns (address);
+
+    function merkle() external view returns (address);
 }

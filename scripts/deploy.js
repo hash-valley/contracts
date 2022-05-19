@@ -3,6 +3,8 @@ const config = require("../config");
 const fs = require("fs");
 
 async function deploy() {
+  const network = await hre.ethers.provider.getNetwork();
+
   const Storage = await hre.ethers.getContractFactory("AddressStorage");
   const storage = await Storage.deploy();
   await storage.deployed();
@@ -15,6 +17,11 @@ async function deploy() {
   );
   await royalty.deployed();
   console.log("Royalty Manager deployed to:", royalty.address);
+
+  const Merkle = await hre.ethers.getContractFactory("MerkleDiscount");
+  const merkle = await Merkle.deploy(config.miladyMerkleRoot, storage.address);
+  await merkle.deployed();
+  console.log("MerkleDiscount deployed to:", merkle.address);
 
   const Vineyard = await hre.ethers.getContractFactory("Vineyard");
   const vineyard = await Vineyard.deploy(
@@ -58,28 +65,42 @@ async function deploy() {
     vineyard.address,
     bottle.address,
     give.address,
-    royalty.address
+    royalty.address,
+    merkle.address
   );
 
   await vineyard.initR();
   await bottle.initR();
 
-  const data = JSON.stringify({
-    vine_address: vineyard.address,
-    cellar_address: cellar.address,
-    bottle_address: bottle.address,
-    vinegar_address: vinegar.address,
-    giveaway_address: give.address,
-    address_storage_address: storage.address,
-    royalth_address: royalty.address
-  }, null, 2);
+  const data = JSON.stringify(
+    {
+      vine_address: vineyard.address,
+      cellar_address: cellar.address,
+      bottle_address: bottle.address,
+      vinegar_address: vinegar.address,
+      giveaway_address: give.address,
+      address_storage_address: storage.address,
+      royalty_address: royalty.address,
+      merkle_address: merkle.address,
+    },
+    null,
+    2
+  );
 
-  fs.writeFileSync("deployment.json", data, (err) => {
-    if (err) {
-      throw err;
+  if (!fs.existsSync("deployments")) {
+    fs.mkdirSync("deployments");
+  }
+
+  fs.writeFileSync(
+    `deployments/deployment_${network.chainId}.json`,
+    data,
+    (err) => {
+      if (err) {
+        throw err;
+      }
+      console.log("JSON data is saved.");
     }
-    console.log("JSON data is saved.");
-  });
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere

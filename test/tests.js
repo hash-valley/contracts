@@ -13,7 +13,7 @@ describe("Hash Valley tests", function () {
   let storage;
   let royalty;
   let quixotic;
-  let provider;
+  let merkle;
 
   const deploy = async () => {
     const Quixotic = await hre.ethers.getContractFactory("DummyQuixotic");
@@ -41,6 +41,13 @@ describe("Hash Valley tests", function () {
     );
     await bottle.deployed();
 
+    const Merkle = await hre.ethers.getContractFactory("MerkleDiscount");
+    merkle = await Merkle.deploy(
+      "0x7e4de12c8a18b1caf55b81b3ffec618a10194aa48e09821e3d3775bf280ba4c5",
+      storage.address
+    );
+    await merkle.deployed();
+
     const Vineyard = await hre.ethers.getContractFactory("Vineyard");
     vineyard = await Vineyard.deploy(
       config.vine_base_uri,
@@ -65,14 +72,14 @@ describe("Hash Valley tests", function () {
       vineyard.address,
       bottle.address,
       token.address,
-      royalty.address
+      royalty.address,
+      merkle.address
     );
 
     await vineyard.initR();
     await bottle.initR();
 
     accounts = await ethers.getSigners();
-    provider = await ethers.getDefaultProvider();
   };
 
   describe("Setup and minting", function () {
@@ -85,13 +92,14 @@ describe("Hash Valley tests", function () {
       expect(await storage.cellar()).to.equal(cellar.address);
       expect(await storage.bottle()).to.equal(bottle.address);
       expect(await storage.vinegar()).to.equal(vinegar.address);
+      expect(await storage.merkle()).to.equal(merkle.address);
     });
 
     it("Owner set to royalty manager", async () => {
       expect(await vineyard.owner()).to.equal(royalty.address);
     });
 
-    it("first 100 are free, 0.06 eth after that", async () => {
+    it("first 100 are free, 0.07 eth after that", async () => {
       for (let i = 0; i < 100; i++) {
         const tx = await vineyard
           .connect(accounts[1])
@@ -112,13 +120,69 @@ describe("Hash Valley tests", function () {
 
       const tx = await vineyard
         .connect(accounts[1])
-        .newVineyards([4, 2, 0, 4], { value: ethers.utils.parseEther("0.06") });
+        .newVineyards([4, 2, 0, 4], { value: ethers.utils.parseEther(".07") });
       expect(tx)
         .to.emit(vineyard, "Transfer")
         .withArgs(
           "0x0000000000000000000000000000000000000000",
           accounts[1].address,
           100
+        );
+    });
+
+    it("Merkle discount can be used after first 100 are minted", async () => {
+      for (let i = 0; i < 100; i++) {
+        await vineyard.connect(accounts[1]).newVineyards([4, 2, 0, 4]);
+      }
+      const proofs = [
+        ["0x3f68e79174daf15b50e15833babc8eb7743e730bb9606f922c48e95314c3905c"],
+        ["0x8d7516f92f86ff2bff7638117eeefe54f86ce065a68c3b0f6c4b3d9bfb491ad6"],
+      ];
+
+      // bad calls
+      await expect(
+        vineyard.newVineyardsDiscount([4, 2, 0, 4], 0, proofs[0], {
+          value: ethers.utils.parseEther("0.03"),
+        })
+      ).to.be.revertedWith("Value below price");
+      await expect(
+        vineyard.newVineyardsDiscount([4, 2, 0, 4], 1, proofs[0], {
+          value: ethers.utils.parseEther("0.04"),
+        })
+      ).to.be.revertedWith("MerkleDistributor: Invalid proof.");
+      await expect(
+        vineyard.newVineyardsDiscount([4, 2, 0, 4], 0, proofs[1], {
+          value: ethers.utils.parseEther("0.04"),
+        })
+      ).to.be.revertedWith("MerkleDistributor: Invalid proof.");
+
+      // good calls
+      await expect(
+        vineyard
+          .connect(accounts[0])
+          .newVineyardsDiscount([4, 2, 0, 4], 0, proofs[0], {
+            value: ethers.utils.parseEther("0.04"),
+          })
+      )
+        .to.emit(vineyard, "Transfer")
+        .withArgs(
+          "0x0000000000000000000000000000000000000000",
+          accounts[0].address,
+          100
+        );
+
+      await expect(
+        vineyard
+          .connect(accounts[1])
+          .newVineyardsDiscount([4, 2, 0, 4], 1, proofs[1], {
+            value: ethers.utils.parseEther("0.04"),
+          })
+      )
+        .to.emit(vineyard, "Transfer")
+        .withArgs(
+          "0x0000000000000000000000000000000000000000",
+          accounts[1].address,
+          101
         );
     });
 
@@ -140,13 +204,13 @@ describe("Hash Valley tests", function () {
       const max = Number(await vineyard.maxVineyards());
       for (let i = 0; i < max; i++) {
         await vineyard.newVineyards([4, 2, 0, 4], {
-          value: ethers.utils.parseEther("0.06"),
+          value: ethers.utils.parseEther("0.07"),
         });
       }
 
       await expect(
         vineyard.newVineyards([4, 2, 0, 4], {
-          value: ethers.utils.parseEther("0.06"),
+          value: ethers.utils.parseEther("0.07"),
         })
       ).to.be.revertedWith("Max vineyards minted");
 
@@ -183,7 +247,7 @@ describe("Hash Valley tests", function () {
         vineyard.connect(accounts[1]).withdrawAll()
       ).to.be.revertedWith("!deployer");
 
-      const tx = await vineyard.connect(accounts[0]).withdrawAll();
+      await vineyard.connect(accounts[0]).withdrawAll();
     });
 
     it("get params", async () => {
