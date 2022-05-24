@@ -7,26 +7,47 @@ async function deploy() {
 
   const Storage = await hre.ethers.getContractFactory("AddressStorage");
   const storage = await Storage.deploy();
-  await storage.deployed();
+  const storage_deploy_tx = await storage.deployed();
   console.log("Address Storage deployed to:", storage.address);
 
+  let market_address;
+  if (network.chainId === 69) {
+    //kovan
+    market_address = "0x1c35498426F846C5B16339427daE42102fB6b0CE";
+  } else if (network.chainId === 10) {
+    // optimism
+    market_address = "0xe5c7b4865d7f2b08faadf3f6d392e6d6fa7b903c";
+  } else if (network.chainId === 31337) {
+    // localhost
+    const Quixotic = await hre.ethers.getContractFactory("DummyQuixotic");
+    quixotic = await Quixotic.deploy();
+    await quixotic.deployed();
+    market_address = quixotic.address;
+  } else {
+    throw "unrecognied network";
+  }
+
   const Royalty = await hre.ethers.getContractFactory("RoyaltyManager");
-  const royalty = await Royalty.deploy(
-    storage.address,
-    "0x6749aB437cd8803ecCC3aD707F969298Cda65921"
-  );
+  const royalty = await Royalty.deploy(storage.address, market_address);
   await royalty.deployed();
   console.log("Royalty Manager deployed to:", royalty.address);
 
   const Merkle = await hre.ethers.getContractFactory("MerkleDiscount");
-  const merkle = await Merkle.deploy(config.discountMerkleRoot, storage.address);
+  const merkle = await Merkle.deploy(
+    config.discountMerkleRoot,
+    storage.address
+  );
   await merkle.deployed();
   console.log("MerkleDiscount deployed to:", merkle.address);
+
+  const VineUri = await hre.ethers.getContractFactory("VotableUri");
+  const vineUri = await VineUri.deploy(storage.address, config.vine_img_uri);
+  await vineUri.deployed();
+  console.log("VineURi deployed to:", vineUri.address);
 
   const Vineyard = await hre.ethers.getContractFactory("Vineyard");
   const vineyard = await Vineyard.deploy(
     config.vine_base_uri,
-    config.vine_img_uri,
     storage.address,
     config.mintReqs,
     config.climates
@@ -39,10 +60,14 @@ async function deploy() {
   await cellar.deployed();
   console.log("Cellar deployed to:", cellar.address);
 
+  const WineUri = await hre.ethers.getContractFactory("VotableUri");
+  const wineUri = await WineUri.deploy(storage.address, config.bottle_img_uri);
+  await wineUri.deployed();
+  console.log("WineURi deployed to:", wineUri.address);
+
   const WineBottle = await hre.ethers.getContractFactory("WineBottle");
   const bottle = await WineBottle.deploy(
     config.bottle_base_uri,
-    config.bottle_img_uri,
     storage.address,
     config.eraBounds
   );
@@ -66,7 +91,9 @@ async function deploy() {
     bottle.address,
     give.address,
     royalty.address,
-    merkle.address
+    merkle.address,
+    wineUri.address,
+    vineUri.address
   );
 
   await vineyard.initR();
@@ -74,6 +101,7 @@ async function deploy() {
 
   const data = JSON.stringify(
     {
+      startBlock: storage_deploy_tx.deployTransaction.blockNumber,
       vine_address: vineyard.address,
       cellar_address: cellar.address,
       bottle_address: bottle.address,
@@ -82,6 +110,8 @@ async function deploy() {
       address_storage_address: storage.address,
       royalty_address: royalty.address,
       merkle_address: merkle.address,
+      wine_uri_address: wineUri.address,
+      vine_uri_address: vineUri.address,
     },
     null,
     2

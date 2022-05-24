@@ -12,32 +12,33 @@ contract VotableUri {
     uint256 public forVotes;
     uint256 public againstVotes;
     string public newUri;
-    address public artist;
+    address public newArtist;
     bool public settled = true;
     IAddressStorage addressStorage;
 
-    mapping(uint256 => string) public imgVersions;
-    uint256 public imgVersionCount = 0;
-    mapping(uint256 => address) public artists;
+    string public uri;
+    address public artist;
 
     // EVENTS
     event Suggest(
         uint256 startTimestamp,
         string newUri,
-        address artist,
+        address newArtist,
         uint256 bottle,
         uint256 forVotes
     );
     event Support(uint256 startTimestamp, uint256 bottle, uint256 forVotes);
     event Retort(uint256 startTimestamp, uint256 bottle, uint256 againstVotes);
-    event Complete(uint256 startTimestamp, string newUri, address artist);
+    event Complete(uint256 startTimestamp, string newUri, address newArtist);
+    event Setup(string newUri, address newArtist);
 
     // CONSTRUCTOR
     constructor(address _addressStorage, string memory _imgUri) {
         addressStorage = IAddressStorage(_addressStorage);
-        imgVersions[imgVersionCount] = _imgUri;
-        artists[imgVersionCount] = msg.sender;
-        imgVersionCount += 1;
+        uri = _imgUri;
+        artist = msg.sender;
+        
+        emit Setup(uri, artist);
     }
 
     // PUBLIC FUNCTIONS
@@ -69,7 +70,7 @@ contract VotableUri {
         forVotes = bottle.bottleAge(_tokenId);
         againstVotes = 0;
         newUri = _newUri;
-        artist = _artist;
+        newArtist = _artist;
         settled = false;
         emit Suggest(startTimestamp, _newUri, _artist, _tokenId, forVotes);
     }
@@ -106,15 +107,14 @@ contract VotableUri {
         require(startTimestamp + 36 hours < block.timestamp, "Too soon");
         require(startTimestamp + 48 hours > block.timestamp, "Too late");
 
-        imgVersions[imgVersionCount] = newUri;
-        artists[imgVersionCount] = artist;
-        imgVersionCount += 1;
+        artist = newArtist;
+        uri = newUri;
         settled = true;
-        IVinegar(addressStorage.vinegar()).voteReward(artist);
+        IVinegar(addressStorage.vinegar()).voteReward(newArtist);
 
         IRoyaltyManager(addressStorage.royaltyManager()).updateRoyalties(
-            artist
+            newArtist
         );
-        emit Complete(startTimestamp, newUri, artist);
+        emit Complete(startTimestamp, newUri, newArtist);
     }
 }

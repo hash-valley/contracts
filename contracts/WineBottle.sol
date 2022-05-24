@@ -13,11 +13,12 @@
 pragma solidity ^0.8.12;
 
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "./UriUtils.sol";
 import "./Randomness.sol";
-import "./VotableUri.sol";
 import "./interfaces/IVinegar.sol";
 import "./interfaces/IRoyaltyManager.sol";
+import "./interfaces/IVotableUri.sol";
+import "./interfaces/IAddressStorage.sol";
+import "./UriUtils.sol";
 
 interface ICellar {
     function cellarTime(uint256 _tokenID) external view returns (uint256);
@@ -32,8 +33,9 @@ interface IVineyard {
     function getClimate(uint256 _tokenId) external view returns (uint8);
 }
 
-contract WineBottle is ERC721, VotableUri {
-    address private deployer;
+contract WineBottle is ERC721 {
+    IAddressStorage private addressStorage;
+    address public deployer;
     uint256 public totalSupply;
     uint256 public lastId = 0;
     mapping(uint256 => uint256) public bottleMinted;
@@ -57,14 +59,11 @@ contract WineBottle is ERC721, VotableUri {
     // CONSTRUCTOR
     constructor(
         string memory _baseUri,
-        string memory _imgUri,
         address _addressStorage,
         uint256[] memory _eraBounds
-    )
-        ERC721("Hash Valley Vintage", "VNTG")
-        VotableUri(_addressStorage, _imgUri)
-    {
+    ) ERC721("Hash Valley Vintage", "VNTG") {
         deployer = _msgSender();
+        addressStorage = IAddressStorage(_addressStorage);
         setBaseURI(_baseUri);
         eraBounds = _eraBounds;
 
@@ -284,19 +283,10 @@ contract WineBottle is ERC721, VotableUri {
     }
 
     /// @notice returns metadata string for latest uri, royalty recipient settings
-    function tokenURI(uint256 tokenId)
+    function tokenURI(uint256 _tokenId)
         public
         view
         override
-        returns (string memory)
-    {
-        return bottleMetadata(tokenId, imgVersionCount - 1);
-    }
-
-    /// @notice returns metadata string for current or historical versions
-    function bottleMetadata(uint256 _tokenId, uint256 _version)
-        public
-        view
         returns (string memory)
     {
         require(
@@ -317,7 +307,7 @@ contract WineBottle is ERC721, VotableUri {
                 '", "image": "ipfs://QmU6e3sS9HJYmg9UV3h51h8WzhT1yrAMcNQnvWqWyLDhPM/',
                 UriUtils.uint2str(attr[0]),
                 '.png", "description": "A wine bottle...", "animation_url": "',
-                imgVersions[_version]
+                IVotableUri(addressStorage.wineUri()).uri()
             ),
             string.concat(
                 "?seed=",
@@ -333,7 +323,7 @@ contract WineBottle is ERC721, VotableUri {
                 '", "seller_fee_basis_points": ',
                 UriUtils.uint2str(sellerFee),
                 ', "fee_recipient": "0x',
-                UriUtils.toAsciiString(artists[_version])
+                UriUtils.toAsciiString(IVotableUri(addressStorage.wineUri()).artist())
             ),
             string.concat(
                 '", "attributes": [',

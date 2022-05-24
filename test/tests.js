@@ -3,6 +3,10 @@ const { ethers } = require("hardhat");
 
 const config = require("../config");
 
+const day = 24 * 60 * 60;
+const month = 30 * day;
+const spCost = ethers.utils.parseEther("0.01");
+
 describe("Hash Valley tests", function () {
   let accounts;
   let vineyard;
@@ -14,6 +18,9 @@ describe("Hash Valley tests", function () {
   let royalty;
   let quixotic;
   let merkle;
+
+  let wineUri;
+  let vineUri;
 
   const deploy = async () => {
     const Quixotic = await hre.ethers.getContractFactory("DummyQuixotic");
@@ -32,10 +39,13 @@ describe("Hash Valley tests", function () {
     cellar = await Cellar.deploy(storage.address);
     await cellar.deployed();
 
+    const WineUri = await hre.ethers.getContractFactory("VotableUri");
+    wineUri = await WineUri.deploy(storage.address, config.bottle_img_uri);
+    await wineUri.deployed();
+
     const WineBottle = await hre.ethers.getContractFactory("WineBottle");
     bottle = await WineBottle.deploy(
       config.bottle_base_uri,
-      config.bottle_img_uri,
       storage.address,
       config.eraBounds
     );
@@ -48,10 +58,13 @@ describe("Hash Valley tests", function () {
     );
     await merkle.deployed();
 
+    const VineUri = await hre.ethers.getContractFactory("VotableUri");
+    vineUri = await VineUri.deploy(storage.address, config.vine_img_uri);
+    await vineUri.deployed();
+
     const Vineyard = await hre.ethers.getContractFactory("Vineyard");
     vineyard = await Vineyard.deploy(
       config.vine_base_uri,
-      config.vine_img_uri,
       storage.address,
       config.mintReqs,
       config.climates
@@ -73,7 +86,9 @@ describe("Hash Valley tests", function () {
       bottle.address,
       token.address,
       royalty.address,
-      merkle.address
+      merkle.address,
+      wineUri.address,
+      vineUri.address
     );
 
     await vineyard.initR();
@@ -379,9 +394,7 @@ describe("Hash Valley tests", function () {
     });
 
     it("sprinkler means you don't have to water", async () => {
-      await vineyard.connect(accounts[1]).buySprinkler(0, {
-        value: ethers.utils.parseEther("0.01"),
-      });
+      await vineyard.connect(accounts[1]).buySprinkler(0, { value: spCost });
       await vineyard.connect(accounts[1]).plant(0);
 
       let seasonLength = Number(await vineyard.firstSeasonLength());
@@ -392,9 +405,7 @@ describe("Hash Valley tests", function () {
     });
 
     it("sprinkler lasts 3 years", async () => {
-      await vineyard.connect(accounts[1]).buySprinkler(0, {
-        value: ethers.utils.parseEther("0.01"),
-      });
+      await vineyard.connect(accounts[1]).buySprinkler(0, { value: spCost });
 
       let firstSeasonLength = Number(await vineyard.firstSeasonLength());
       let seasonLength = Number(await vineyard.seasonLength());
@@ -594,8 +605,6 @@ describe("Hash Valley tests", function () {
     });
 
     it("cellar age", async () => {
-      const day = 24 * 60 * 60;
-      const month = 30 * day;
       const ages = await Promise.all([
         bottle.cellarAged(15 * day),
         bottle.cellarAged(5 * month + 1 * day),
@@ -713,59 +722,40 @@ describe("Hash Valley tests", function () {
     });
   });
 
-  describe("Council", function () {
+  describe("CouncilV1", function () {
     beforeEach(async () => {
       await deploy();
       await vineyard.newVineyards([12, 13, 0, 4]);
       await vineyard.newVineyards([12, 13, 0, 4]);
       await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
       await vineyard.connect(accounts[2]).newVineyards([12, 13, 0, 4]);
+      await vineyard.buySprinkler(0, { value: spCost });
+      await vineyard.buySprinkler(1, { value: spCost });
+      await vineyard.buySprinkler(2, { value: spCost });
+      await vineyard.buySprinkler(3, { value: spCost });
       await vineyard.start();
       await vineyard.plantMultiple([0, 1, 2, 3]);
 
-      let time = Number(await vineyard.minWaterTime(0));
-      for (let i = 0; i <= 18; i++) {
-        await ethers.provider.send("evm_increaseTime", [time]);
-        await vineyard.waterMultiple([0, 1, 2, 3]);
-      }
-
+      let time = 19 * day;
       await ethers.provider.send("evm_increaseTime", [time]);
+
       await vineyard.harvestMultiple([0, 1, 2, 3]);
       await ethers.provider.send("evm_increaseTime", [10]);
       await ethers.provider.send("evm_mine", []);
     });
 
-    it("suggest proposal (vine)", async () => {
+    it("suggest proposal", async () => {
       const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
       const newAddress = accounts[1].address;
       const age = await bottle.bottleAge(0);
-      const tx = await vineyard.suggest(0, newCid, newAddress);
+      const tx = await vineUri.suggest(0, newCid, newAddress);
 
-      expect(await vineyard.artist()).to.equal(newAddress);
-      expect(await vineyard.newUri()).to.equal(newCid);
+      expect(await vineUri.newArtist()).to.equal(newAddress);
+      expect(await vineUri.newUri()).to.equal(newCid);
       expect(tx)
-        .to.emit(vineyard, "Suggest")
+        .to.emit(vineUri, "Suggest")
         .withArgs(
-          await vineyard.startTimestamp(),
-          newCid,
-          newAddress,
-          0,
-          age.add(ethers.BigNumber.from(1))
-        );
-    });
-
-    it("suggest proposal (bottle)", async () => {
-      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
-      const newAddress = accounts[1].address;
-      const age = await bottle.bottleAge(0);
-      const tx = await bottle.suggest(0, newCid, newAddress);
-
-      expect(await bottle.artist()).to.equal(newAddress);
-      expect(await bottle.newUri()).to.equal(newCid);
-      expect(tx)
-        .to.emit(bottle, "Suggest")
-        .withArgs(
-          await bottle.startTimestamp(),
+          await vineUri.startTimestamp(),
           newCid,
           newAddress,
           0,
@@ -777,10 +767,7 @@ describe("Hash Valley tests", function () {
       const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
       const newAddress = accounts[1].address;
 
-      await expect(vineyard.suggest(2, newCid, newAddress)).to.be.revertedWith(
-        "Bottle not owned"
-      );
-      await expect(bottle.suggest(2, newCid, newAddress)).to.be.revertedWith(
+      await expect(vineUri.suggest(2, newCid, newAddress)).to.be.revertedWith(
         "Bottle not owned"
       );
     });
@@ -788,62 +775,32 @@ describe("Hash Valley tests", function () {
     it("only open 36 hours for voting", async () => {
       const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
       const newAddress = accounts[1].address;
-      await vineyard.suggest(0, newCid, newAddress);
+      await vineUri.suggest(0, newCid, newAddress);
 
       await ethers.provider.send("evm_increaseTime", [36 * 60 * 60]);
       await ethers.provider.send("evm_mine", []);
 
-      await expect(vineyard.support(2)).to.be.revertedWith("Bottle not owned");
-      await expect(vineyard.support(1)).to.be.revertedWith("No queue");
+      await expect(vineUri.support(2)).to.be.revertedWith("Bottle not owned");
+      await expect(vineUri.support(1)).to.be.revertedWith("No queue");
 
-      await expect(vineyard.retort(2)).to.be.revertedWith("Bottle not owned");
-      await expect(vineyard.retort(1)).to.be.revertedWith("No queue");
-
-      // bottle
-      await bottle.suggest(0, newCid, newAddress);
-
-      await ethers.provider.send("evm_increaseTime", [36 * 60 * 60]);
-      await ethers.provider.send("evm_mine", []);
-
-      await expect(bottle.support(2)).to.be.revertedWith("Bottle not owned");
-      await expect(bottle.support(1)).to.be.revertedWith("No queue");
-
-      await expect(bottle.retort(2)).to.be.revertedWith("Bottle not owned");
-      await expect(bottle.retort(1)).to.be.revertedWith("No queue");
+      await expect(vineUri.retort(2)).to.be.revertedWith("Bottle not owned");
+      await expect(vineUri.retort(1)).to.be.revertedWith("No queue");
     });
 
     it("can re-suggest if not settled within 12 hours of passing", async () => {
       const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
       const newAddress = accounts[1].address;
-      await vineyard.suggest(0, newCid, newAddress);
+      await vineUri.suggest(0, newCid, newAddress);
 
       await ethers.provider.send("evm_increaseTime", [48 * 60 * 60 + 1]);
       await ethers.provider.send("evm_mine", []);
 
       let age = await bottle.bottleAge(0);
-      let tx = await vineyard.suggest(0, newCid, newAddress);
+      let tx = await vineUri.suggest(0, newCid, newAddress);
       expect(tx)
-        .to.emit(vineyard, "Suggest")
+        .to.emit(vineUri, "Suggest")
         .withArgs(
-          await vineyard.startTimestamp(),
-          newCid,
-          newAddress,
-          0,
-          age.add(ethers.BigNumber.from(1))
-        );
-
-      // bottle
-      await bottle.suggest(0, newCid, newAddress);
-
-      await ethers.provider.send("evm_increaseTime", [48 * 60 * 60 + 1]);
-      await ethers.provider.send("evm_mine", []);
-
-      age = await bottle.bottleAge(0);
-      tx = await bottle.suggest(0, newCid, newAddress);
-      expect(tx)
-        .to.emit(bottle, "Suggest")
-        .withArgs(
-          await bottle.startTimestamp(),
+          await vineUri.startTimestamp(),
           newCid,
           newAddress,
           0,
@@ -854,41 +811,20 @@ describe("Hash Valley tests", function () {
     it("can re-suggest if failed and 36 hours passed", async () => {
       const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
       const newAddress = accounts[1].address;
-      await vineyard.suggest(0, newCid, newAddress);
+      await vineUri.suggest(0, newCid, newAddress);
       await ethers.provider.send("evm_increaseTime", [1 * 60 * 60]);
       await ethers.provider.send("evm_mine", []);
-      await vineyard.connect(accounts[1]).retort(2);
+      await vineUri.connect(accounts[1]).retort(2);
 
       await ethers.provider.send("evm_increaseTime", [35 * 60 * 60 + 1]);
       await ethers.provider.send("evm_mine", []);
 
       let age = await bottle.bottleAge(0);
-      let tx = await vineyard.suggest(0, newCid, newAddress);
+      let tx = await vineUri.suggest(0, newCid, newAddress);
       expect(tx)
-        .to.emit(vineyard, "Suggest")
+        .to.emit(vineUri, "Suggest")
         .withArgs(
-          await vineyard.startTimestamp(),
-          newCid,
-          newAddress,
-          0,
-          age.add(ethers.BigNumber.from(1))
-        );
-
-      // bottle
-      await bottle.suggest(0, newCid, newAddress);
-      await ethers.provider.send("evm_increaseTime", [1 * 60 * 60]);
-      await ethers.provider.send("evm_mine", []);
-      await bottle.connect(accounts[1]).retort(2);
-
-      await ethers.provider.send("evm_increaseTime", [35 * 60 * 60 + 1]);
-      await ethers.provider.send("evm_mine", []);
-
-      age = await bottle.bottleAge(0);
-      tx = await bottle.suggest(0, newCid, newAddress);
-      expect(tx)
-        .to.emit(bottle, "Suggest")
-        .withArgs(
-          await bottle.startTimestamp(),
+          await vineUri.startTimestamp(),
           newCid,
           newAddress,
           0,
@@ -899,125 +835,73 @@ describe("Hash Valley tests", function () {
     it("can support", async () => {
       const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
       const newAddress = accounts[1].address;
-      await vineyard.suggest(0, newCid, newAddress);
-      let tx = await vineyard.support(1);
+      await vineUri.suggest(0, newCid, newAddress);
+      let tx = await vineUri.support(1);
 
       expect(tx)
-        .to.emit(vineyard, "Support")
-        .withArgs(
-          await vineyard.startTimestamp(),
-          1,
-          await vineyard.forVotes()
-        );
-
-      // bottle
-      await bottle.suggest(0, newCid, newAddress);
-      tx = await bottle.support(1);
-
-      expect(tx)
-        .to.emit(bottle, "Support")
-        .withArgs(await bottle.startTimestamp(), 1, await bottle.forVotes());
+        .to.emit(vineUri, "Support")
+        .withArgs(await vineUri.startTimestamp(), 1, await vineUri.forVotes());
     });
 
     it("can't double support", async () => {
       const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
       const newAddress = accounts[1].address;
-      await vineyard.suggest(0, newCid, newAddress);
-      await vineyard.support(1);
-      await expect(vineyard.support(1)).to.be.revertedWith("Double vote");
-
-      // bottle
-      await bottle.suggest(0, newCid, newAddress);
-      await bottle.support(1);
-      await expect(bottle.support(1)).to.be.revertedWith("Double vote");
+      await vineUri.suggest(0, newCid, newAddress);
+      await vineUri.support(1);
+      await expect(vineUri.support(1)).to.be.revertedWith("Double vote");
     });
 
     it("can retort", async () => {
       const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
       const newAddress = accounts[1].address;
-      await vineyard.suggest(0, newCid, newAddress);
-      let tx = await vineyard.retort(1);
+      await vineUri.suggest(0, newCid, newAddress);
+      let tx = await vineUri.retort(1);
 
       expect(tx)
-        .to.emit(vineyard, "Retort")
+        .to.emit(vineUri, "Retort")
         .withArgs(
-          await vineyard.startTimestamp(),
+          await vineUri.startTimestamp(),
           1,
-          await vineyard.againstVotes()
-        );
-
-      // bottle
-      await bottle.suggest(0, newCid, newAddress);
-      tx = await bottle.retort(1);
-
-      expect(tx)
-        .to.emit(bottle, "Retort")
-        .withArgs(
-          await bottle.startTimestamp(),
-          1,
-          await bottle.againstVotes()
+          await vineUri.againstVotes()
         );
     });
 
     it("can't double retort", async () => {
       const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
       const newAddress = accounts[1].address;
-      await vineyard.suggest(0, newCid, newAddress);
-      await vineyard.retort(1);
-      await expect(vineyard.retort(1)).to.be.revertedWith("Double vote");
-
-      // bottle
-      await bottle.suggest(0, newCid, newAddress);
-      await bottle.retort(1);
-      await expect(bottle.retort(1)).to.be.revertedWith("Double vote");
+      await vineUri.suggest(0, newCid, newAddress);
+      await vineUri.retort(1);
+      await expect(vineUri.retort(1)).to.be.revertedWith("Double vote");
     });
 
     it("can complete if passes", async () => {
       const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
       const newAddress = accounts[1].address;
-      await vineyard.suggest(0, newCid, newAddress);
+      await vineUri.suggest(0, newCid, newAddress);
 
       await ethers.provider.send("evm_increaseTime", [36 * 60 * 60 + 1]);
       await ethers.provider.send("evm_mine", []);
 
-      let tx = await vineyard.complete();
+      let tx = await vineUri.complete();
       expect(tx)
-        .to.emit(vineyard, "Complete")
-        .withArgs(await vineyard.startTimestamp(), newCid, newAddress);
-      expect(await vineyard.artists(1)).to.equal(newAddress);
-      expect((await vineyard.imgVersionCount()).toString()).to.equal("2");
-      expect(await vineyard.imgVersions(1)).to.equal(newCid);
+        .to.emit(vineUri, "Complete")
+        .withArgs(await vineUri.startTimestamp(), newCid, newAddress);
       expect((await vinegar.balanceOf(newAddress)).toString()).to.equal(
         "500000000000000000000"
       );
       expect(await quixotic.payouts(vineyard.address)).to.equal(newAddress);
-
-      // bottle
-      await bottle.suggest(0, newCid, newAddress);
-
-      await ethers.provider.send("evm_increaseTime", [36 * 60 * 60 + 1]);
-      await ethers.provider.send("evm_mine", []);
-
-      tx = await bottle.complete();
-      expect(tx)
-        .to.emit(bottle, "Complete")
-        .withArgs(await bottle.startTimestamp(), newCid, newAddress);
-      expect(await bottle.artists(1)).to.equal(newAddress);
-      expect((await bottle.imgVersionCount()).toString()).to.equal("2");
-      expect(await bottle.imgVersions(1)).to.equal(newCid);
-      expect(await quixotic.payouts(bottle.address)).to.equal(newAddress);
     });
 
     it("9 day total cooldown if passed and settled", async () => {
       const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
       const newAddress = accounts[1].address;
-      await vineyard.suggest(0, newCid, newAddress);
+      await vineUri.suggest(0, newCid, newAddress);
 
       await ethers.provider.send("evm_increaseTime", [36 * 60 * 60 + 1]);
       await ethers.provider.send("evm_mine", []);
 
-      await vineyard.complete();
-      await expect(vineyard.suggest(0, newCid, newAddress)).to.be.revertedWith(
+      await vineUri.complete();
+      await expect(vineUri.suggest(0, newCid, newAddress)).to.be.revertedWith(
         "Too soon"
       );
 
@@ -1025,42 +909,65 @@ describe("Hash Valley tests", function () {
       await ethers.provider.send("evm_mine", []);
 
       let age = await bottle.bottleAge(0);
-      let tx = await vineyard.suggest(0, newCid, newAddress);
+      let tx = await vineUri.suggest(0, newCid, newAddress);
       expect(tx)
-        .to.emit(vineyard, "Suggest")
+        .to.emit(vineUri, "Suggest")
         .withArgs(
-          await vineyard.startTimestamp(),
+          await vineUri.startTimestamp(),
           newCid,
           newAddress,
           0,
           age.add(ethers.BigNumber.from(1))
         );
+    });
+  });
 
-      // bottle
-      await bottle.suggest(0, newCid, newAddress);
+  describe.skip("CouncilV2", function () {
+    beforeEach(async () => {
+      await deploy();
+      await vineyard.newVineyards([12, 13, 0, 4]);
+      await vineyard.newVineyards([12, 13, 0, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
+      await vineyard.connect(accounts[2]).newVineyards([12, 13, 0, 4]);
+      await vineyard.buySprinkler(0, { value: spCost });
+      await vineyard.buySprinkler(1, { value: spCost });
+      await vineyard.buySprinkler(2, { value: spCost });
+      await vineyard.buySprinkler(3, { value: spCost });
+      await vineyard.start();
+      await vineyard.plantMultiple([0, 1, 2, 3]);
 
-      await ethers.provider.send("evm_increaseTime", [36 * 60 * 60 + 1]);
+      let time = 19 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+
+      await vineyard.harvestMultiple([0, 1, 2, 3]);
+      await ethers.provider.send("evm_increaseTime", [10]);
       await ethers.provider.send("evm_mine", []);
 
-      await bottle.complete();
-      await expect(bottle.suggest(0, newCid, newAddress)).to.be.revertedWith(
-        "Too soon"
+      // await vineyard.fakes(0)
+      // await vineyard.fakes(100)
+      // await vineyard.fakes(200)
+      // await vineyard.fakes(300)
+      // await vineyard.fakes(400)
+      // await vineyard.fakes(500)
+      // await vineyard.fakes(600)
+      // await vineyard.fakes(700)
+      // await vineyard.fakes(800)
+      // await vineyard.fakes(900)
+      // await vineyard.fakes(1000)
+    });
+
+    it("suggest proposal (vine)", async () => {
+      const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
+      const newAddress = accounts[1].address;
+      await vineyard.suggest(0, newCid, newAddress);
+      await ethers.provider.send("evm_increaseTime", [3]);
+      await vineyard.connect(accounts[1]).suggest(2, newCid, newAddress);
+
+      await ethers.provider.send("evm_increaseTime", [7 * day]);
+      await expect(vineyard.complete(accounts[0].address)).to.be.revertedWith(
+        "!highest"
       );
-
-      await ethers.provider.send("evm_increaseTime", [180 * 60 * 60 + 1]);
-      await ethers.provider.send("evm_mine", []);
-
-      age = await bottle.bottleAge(0);
-      tx = await bottle.suggest(0, newCid, newAddress);
-      expect(tx)
-        .to.emit(bottle, "Suggest")
-        .withArgs(
-          await bottle.startTimestamp(),
-          newCid,
-          newAddress,
-          0,
-          age.add(ethers.BigNumber.from(1))
-        );
+      await vineyard.complete(accounts[1].address);
     });
   });
 });

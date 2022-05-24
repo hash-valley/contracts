@@ -13,6 +13,9 @@ contract AddressStorage is IAddressStorage, Ownable {
     address public override royaltyManager;
     address public override merkle;
 
+    address public override wineUri;
+    address public override vineUri;
+
     bool private addressesSet = false;
 
     // EVENTS
@@ -30,7 +33,9 @@ contract AddressStorage is IAddressStorage, Ownable {
         address _bottle,
         address _giveawayToken,
         address _royaltyManager,
-        address _merkle
+        address _merkle,
+        address _wineUri,
+        address _vineUri
     ) public {
         require(addressesSet == false, "already set");
         require(msg.sender == owner(), "not deployer");
@@ -41,12 +46,24 @@ contract AddressStorage is IAddressStorage, Ownable {
         giveawayToken = _giveawayToken;
         royaltyManager = _royaltyManager;
         merkle = _merkle;
+        wineUri = _wineUri;
+        vineUri = _vineUri;
         addressesSet = true;
         emit AddressesSet();
     }
 
     function newRoyaltyManager(address _royaltyManager) external onlyOwner {
         royaltyManager = _royaltyManager;
+        emit AddressesSet();
+    }
+
+    function newVineUri(address _newVineUri) external onlyOwner {
+        vineUri = _newVineUri;
+        emit AddressesSet();
+    }
+
+    function newWineUri(address _newWineUri) external onlyOwner {
+        wineUri = _newWineUri;
         emit AddressesSet();
     }
 }

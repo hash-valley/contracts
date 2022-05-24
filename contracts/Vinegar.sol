@@ -25,8 +25,8 @@ contract Vinegar is ERC20 {
     /// @notice mints tokens to recipient address of vote
     function voteReward(address recipient) external {
         require(
-            msg.sender == addressStorage.bottle() ||
-                msg.sender == addressStorage.vineyard(),
+            msg.sender == addressStorage.wineUri() ||
+                msg.sender == addressStorage.vineUri(),
             "invalid caller"
         );
         _mint(recipient, 500e18);

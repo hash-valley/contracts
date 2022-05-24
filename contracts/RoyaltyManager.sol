@@ -22,11 +22,16 @@ contract RoyaltyManager {
     }
 
     function updateRoyalties(address recipient) external {
-        require(
-            msg.sender == addressStorage.bottle() ||
-                msg.sender == addressStorage.vineyard(),
-            "invalid caller"
-        );
-        quixotic.setRoyalty(msg.sender, payable(recipient), sellerFee / 10);
+        address bottle = addressStorage.bottle();
+        address vine = addressStorage.vineyard();
+        if (msg.sender == addressStorage.wineUri() || msg.sender == bottle) {
+            quixotic.setRoyalty(bottle, payable(recipient), sellerFee / 10);
+        } else if (
+            msg.sender == addressStorage.vineUri() || msg.sender == vine
+        ) {
+            quixotic.setRoyalty(vine, payable(recipient), sellerFee / 10);
+        } else {
+            revert("bad royalty");
+        }
     }
 }

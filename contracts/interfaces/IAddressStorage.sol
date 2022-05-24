@@ -15,4 +15,8 @@ interface IAddressStorage {
     function royaltyManager() external view returns (address);
 
     function merkle() external view returns (address);
+
+    function wineUri() external view returns (address);
+
+    function vineUri() external view returns (address);
 }

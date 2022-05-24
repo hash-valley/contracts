@@ -1,12 +1,18 @@
 const hre = require("hardhat");
 const ethers = hre.ethers;
 
-const ADDRESS = "0x725Ebff6DD72F7eA9d82bbccEF552Df0fC682122";
-
 async function start() {
+  const { chainId } = await ethers.provider.getNetwork();
+  let addresses;
+  try {
+    addresses = require(`../deployments/deployment_${chainId}.json`);
+  } catch {
+    console.error("couldnt load addresses");
+  }
+
   const signer = await ethers.getSigner();
   const vineyard = new ethers.Contract(
-    ADDRESS,
+    addresses.vine_address,
     ["function withdrawAll() public payable"],
     signer
   );

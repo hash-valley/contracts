@@ -14,8 +14,9 @@ pragma solidity ^0.8.12;
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./interfaces/IWineBottle.sol";
 import "./interfaces/IRoyaltyManager.sol";
+import "./interfaces/IVotableUri.sol";
+import "./interfaces/IAddressStorage.sol";
 import "./UriUtils.sol";
-import "./VotableUri.sol";
 
 interface IGiveawayToken {
     function burnOne() external;
@@ -29,8 +30,9 @@ interface IMerkleDiscount {
     ) external returns (bool);
 }
 
-contract Vineyard is ERC721, VotableUri {
-    address private deployer;
+contract Vineyard is ERC721 {
+    IAddressStorage private addressStorage;
+    address public deployer;
     uint256 public totalSupply;
     uint256 public immutable firstSeasonLength = 3 weeks;
     uint256 public immutable seasonLength = 12 weeks;
@@ -39,7 +41,7 @@ contract Vineyard is ERC721, VotableUri {
 
     /// @dev attributes are
     /// location, elevation, isNegative, soil
-    mapping(uint256 => uint16[]) internal tokenAttributes;
+    mapping(uint256 => uint16[]) private tokenAttributes;
     mapping(uint256 => uint256) public planted;
     mapping(uint256 => uint256) public watered;
     mapping(uint256 => uint256) public xp;
@@ -69,14 +71,10 @@ contract Vineyard is ERC721, VotableUri {
     // CONSTRUCTOR
     constructor(
         string memory _baseUri,
-        string memory _imgUri,
         address _addressStorage,
         uint16[3][15] memory _mintReqs,
         uint8[15] memory _climates
-    )
-        ERC721("Hash Valley Vineyard", "VNYD")
-        VotableUri(_addressStorage, _imgUri)
-    {
+    ) ERC721("Hash Valley Vineyard", "VNYD") {
         deployer = _msgSender();
         setBaseURI(_baseUri);
         addressStorage = IAddressStorage(_addressStorage);
@@ -149,7 +147,11 @@ contract Vineyard is ERC721, VotableUri {
         require(totalSupply >= 100, "not yet");
         require(msg.value >= 0.04 ether, "Value below price");
         require(
-            IMerkleDiscount(addressStorage.merkle()).claim(index, _msgSender(), merkleProof),
+            IMerkleDiscount(addressStorage.merkle()).claim(
+                index,
+                _msgSender(),
+                merkleProof
+            ),
             "invalid claim"
         );
         _mintVineyard(_tokenAttributes, false);
@@ -396,27 +398,15 @@ contract Vineyard is ERC721, VotableUri {
 
     // URI
     function setBaseURI(string memory _baseUri) public {
-        require(
-            _msgSender() == deployer || _msgSender() == owner(),
-            "!deployer"
-        );
+        require(_msgSender() == deployer, "!deployer");
         baseUri = _baseUri;
     }
 
     /// @notice returns metadata string for latest uri, royalty recipient settings
-    function tokenURI(uint256 tokenId)
+    function tokenURI(uint256 _tokenId)
         public
         view
         override
-        returns (string memory)
-    {
-        return vineMetadata(tokenId, imgVersionCount - 1);
-    }
-
-    /// @notice returns metadata string for current or historical versions
-    function vineMetadata(uint256 _tokenId, uint256 _version)
-        public
-        view
         returns (string memory)
     {
         require(
@@ -439,7 +429,7 @@ contract Vineyard is ERC721, VotableUri {
                 '.png", "description": "A vineyard...", "animation_url": "'
             ),
             string.concat(
-                imgVersions[_version],
+                IVotableUri(addressStorage.vineUri()).uri(),
                 "?seed=",
                 UriUtils.uint2str(attr[0]),
                 "-",
@@ -454,7 +444,9 @@ contract Vineyard is ERC721, VotableUri {
                 '"seller_fee_basis_points": ',
                 UriUtils.uint2str(sellerFee),
                 ', "fee_recipient": "0x',
-                UriUtils.toAsciiString(artists[_version])
+                UriUtils.toAsciiString(
+                    IVotableUri(addressStorage.vineUri()).artist()
+                )
             ),
             string.concat(
                 '", "attributes": [',

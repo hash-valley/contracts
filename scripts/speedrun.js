@@ -1,16 +1,24 @@
 const hre = require("hardhat");
 const ethers = hre.ethers;
 
-const ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
-
 async function start() {
+  const { chainId } = await ethers.provider.getNetwork();
+  let addresses;
+  try {
+    addresses = require(`../deployments/deployment_${chainId}.json`);
+  } catch {
+    console.error("couldnt load addresses");
+  }
+
   const accounts = await ethers.getSigners();
   const signer = await ethers.getSigner();
   const vineyard = new ethers.Contract(
-    ADDRESS,
+    addresses.vine_address,
     [
       "function currSeason() public view returns (uint256)",
       "function waterMultiple(uint256[] calldata _tokenIds) public",
+      "function harvestMultiple(uint256[] calldata _tokenIds) public",
+      "function plantMultiple(uint256[] calldata _tokenIds) public",
       "function minWaterTime(uint256 _tokenId) public view returns (uint256)",
     ],
     signer
@@ -28,10 +36,13 @@ async function start() {
   }
 
   let time = Number(await vineyard.minWaterTime(0));
+
+  await vineyard.connect(accounts[15]).plantMultiple([0]);
   for (let i = 0; i <= days; i++) {
     await ethers.provider.send("evm_increaseTime", [time]);
-    await vineyard.connect(accounts[2]).waterMultiple([0, 1]);
+    await vineyard.connect(accounts[2]).waterMultiple([0]);
   }
+  await vineyard.connect(accounts[15]).harvestMultiple([0]);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
