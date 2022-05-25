@@ -13,7 +13,7 @@ async function deploy() {
   let market_address;
   if (network.chainId === 69) {
     //kovan
-    market_address = "0x1c35498426F846C5B16339427daE42102fB6b0CE";
+    market_address = "0x6749aB437cd8803ecCC3aD707F969298Cda65921";
   } else if (network.chainId === 10) {
     // optimism
     market_address = "0xe5c7b4865d7f2b08faadf3f6d392e6d6fa7b903c";
@@ -24,7 +24,7 @@ async function deploy() {
     await quixotic.deployed();
     market_address = quixotic.address;
   } else {
-    throw "unrecognied network";
+    throw "unrecognized network";
   }
 
   const Royalty = await hre.ethers.getContractFactory("RoyaltyManager");

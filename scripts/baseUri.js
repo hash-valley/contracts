@@ -9,7 +9,7 @@ async function start() {
   try {
     addresses = require(`../deployments/deployment_${chainId}.json`);
   } catch {
-    console.error("couldnt load addresses");
+    throw("couldnt load addresses");
   }
 
   const signer = await ethers.getSigner();
