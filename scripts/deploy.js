@@ -13,16 +13,17 @@ async function deploy() {
   let market_address;
   if (network.chainId === 69) {
     //kovan
-    market_address = "0x6749aB437cd8803ecCC3aD707F969298Cda65921";
+    market_address = config.kovan_quixotic;
   } else if (network.chainId === 10) {
     // optimism
-    market_address = "0xe5c7b4865d7f2b08faadf3f6d392e6d6fa7b903c";
+    market_address = config.op_quixotic;
   } else if (network.chainId === 31337) {
     // localhost
     const Quixotic = await hre.ethers.getContractFactory("DummyQuixotic");
     quixotic = await Quixotic.deploy();
     await quixotic.deployed();
     market_address = quixotic.address;
+    console.log(`Mock market deployed to ${quixotic.address}`);
   } else {
     throw "unrecognized network";
   }

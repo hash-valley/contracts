@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Viral Public License
 pragma solidity ^0.8.0;
 
-import "./interfaces/IAddressStorage.sol";
+import "../interfaces/IAddressStorage.sol";
 
 interface QuixoticExchange {
     function setRoyalty(
