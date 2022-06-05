@@ -42,13 +42,14 @@ async function deploy() {
   console.log("MerkleDiscount deployed to:", merkle.address);
 
   const VineUri = await hre.ethers.getContractFactory("VotableUri");
-  const vineUri = await VineUri.deploy(storage.address, config.vine_img_uri);
+  const vineUri = await VineUri.deploy(storage.address, config.vine_animation_uri);
   await vineUri.deployed();
   console.log("VineURi deployed to:", vineUri.address);
 
   const Vineyard = await hre.ethers.getContractFactory("Vineyard");
   const vineyard = await Vineyard.deploy(
     config.vine_base_uri,
+    config.vine_img_uri,
     storage.address,
     config.mintReqs,
     config.climates
@@ -62,13 +63,14 @@ async function deploy() {
   console.log("Cellar deployed to:", cellar.address);
 
   const WineUri = await hre.ethers.getContractFactory("VotableUri");
-  const wineUri = await WineUri.deploy(storage.address, config.bottle_img_uri);
+  const wineUri = await WineUri.deploy(storage.address, config.bottle_animation_uri);
   await wineUri.deployed();
   console.log("WineURi deployed to:", wineUri.address);
 
   const WineBottle = await hre.ethers.getContractFactory("WineBottle");
   const bottle = await WineBottle.deploy(
     config.bottle_base_uri,
+    config.bottle_img_uri,
     storage.address,
     config.eraBounds
   );

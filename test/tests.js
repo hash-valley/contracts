@@ -40,12 +40,13 @@ describe("Hash Valley tests", function () {
     await cellar.deployed();
 
     const WineUri = await hre.ethers.getContractFactory("VotableUri");
-    wineUri = await WineUri.deploy(storage.address, config.bottle_img_uri);
+    wineUri = await WineUri.deploy(storage.address, config.bottle_animation_uri);
     await wineUri.deployed();
 
     const WineBottle = await hre.ethers.getContractFactory("WineBottle");
     bottle = await WineBottle.deploy(
       config.bottle_base_uri,
+      config.bottle_img_uri,
       storage.address,
       config.eraBounds
     );
@@ -59,12 +60,13 @@ describe("Hash Valley tests", function () {
     await merkle.deployed();
 
     const VineUri = await hre.ethers.getContractFactory("VotableUri");
-    vineUri = await VineUri.deploy(storage.address, config.vine_img_uri);
+    vineUri = await VineUri.deploy(storage.address, config.vine_animation_uri);
     await vineUri.deployed();
 
     const Vineyard = await hre.ethers.getContractFactory("Vineyard");
     vineyard = await Vineyard.deploy(
       config.vine_base_uri,
+      config.vine_img_uri,
       storage.address,
       config.mintReqs,
       config.climates
