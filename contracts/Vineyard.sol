@@ -256,6 +256,7 @@ contract Vineyard is ERC721 {
 
     /// @notice harvests the selected vineyard
     function harvest(uint256 _tokenId) public {
+        require(ownerOf(_tokenId) == _msgSender(), "Not owner");
         require(harvestTime(), "Not harvest time");
         uint256 season = currSeason();
         require(planted[_tokenId] == season, "Vineyard already harvested");

@@ -93,6 +93,11 @@ async function deploy() {
   await give.deployed();
   console.log("GiveToken deployed to:", give.address);
 
+  const Multi = await hre.ethers.getContractFactory("Multicall");
+  const multi = await Multi.deploy();
+  await multi.deployed();
+  console.log("Multicall deployed to:", multi.address);
+
   await storage.setAddresses(
     cellar.address,
     vinegar.address,
@@ -121,6 +126,7 @@ async function deploy() {
       merkle_address: merkle.address,
       wine_uri_address: wineUri.address,
       vine_uri_address: vineUri.address,
+      multi_address: multi.address,
     },
     null,
     2

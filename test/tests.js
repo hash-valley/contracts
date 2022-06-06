@@ -19,6 +19,8 @@ describe("Hash Valley tests", function () {
   let quixotic;
   let merkle;
 
+  let multi;
+
   let wineUri;
   let vineUri;
 
@@ -86,6 +88,10 @@ describe("Hash Valley tests", function () {
     const Token = await hre.ethers.getContractFactory("GiveawayToken");
     token = await Token.deploy();
     await token.deployed();
+
+    const Multi = await hre.ethers.getContractFactory("Multicall");
+    multi = await Multi.deploy();
+    await multi.deployed();
 
     await storage.setAddresses(
       cellar.address,
@@ -747,7 +753,8 @@ describe("Hash Valley tests", function () {
       let time = 19 * day;
       await ethers.provider.send("evm_increaseTime", [time]);
 
-      await vineyard.harvestMultiple([0, 1, 2, 3]);
+      await vineyard.harvestMultiple([0, 1]);
+      await vineyard.connect(accounts[1]).harvestMultiple([2, 3]);
       await ethers.provider.send("evm_increaseTime", [10]);
       await ethers.provider.send("evm_mine", []);
     });
