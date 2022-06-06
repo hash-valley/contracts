@@ -5,4 +5,6 @@ interface IVotableUri {
     function artist() external view returns (address);
 
     function uri() external view returns (string memory);
+
+    function image() external view returns (string memory);
 }

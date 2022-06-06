@@ -43,7 +43,6 @@ contract WineBottle is ERC721 {
 
     string public baseUri;
     uint16 public immutable sellerFee = 750;
-    string public image_uri;
 
     uint256 internal wineClasses = 4;
     uint8[4] internal wineSubtypes = [3, 2, 2, 3];
@@ -60,14 +59,12 @@ contract WineBottle is ERC721 {
     // CONSTRUCTOR
     constructor(
         string memory _baseUri,
-        string memory _image_uri,
         address _addressStorage,
         uint256[] memory _eraBounds
     ) ERC721("Hash Valley Vintage", "VNTG") {
         deployer = _msgSender();
         addressStorage = IAddressStorage(_addressStorage);
         setBaseURI(_baseUri);
-        image_uri = _image_uri;
         eraBounds = _eraBounds;
 
         wineNotes.push([4, 4, 1]);
@@ -308,7 +305,7 @@ contract WineBottle is ERC721 {
                 "/bottle/",
                 UriUtils.uint2str(_tokenId),
                 '", "image": "',
-                image_uri,
+                IVotableUri(addressStorage.wineUri()).image(),
                 "/",
                 UriUtils.uint2str(attr[0]),
                 '.png", "description": "Grown from vineyards, the age of a bottle signifies its weight in the Hash Valley Council. Stake in the cellar to age even faster.", "animation_url": "',

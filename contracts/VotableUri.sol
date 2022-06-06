@@ -16,8 +16,10 @@ contract VotableUri {
     bool public settled = true;
     IAddressStorage addressStorage;
 
-    string public uri;
-    address public artist;
+    string public uri; // animation_uri in metadata
+    address public artist; // secondary market royalties recipient
+
+    string public image; // image_uri in metadata (marketplace thumbs)
 
     // EVENTS
     event Suggest(
@@ -33,10 +35,12 @@ contract VotableUri {
     event Setup(string newUri, address newArtist);
 
     // CONSTRUCTOR
-    constructor(address _addressStorage, string memory _imgUri) {
+    constructor(address _addressStorage, string memory _animUri, string memory _imguri) {
         addressStorage = IAddressStorage(_addressStorage);
-        uri = _imgUri;
+        uri = _animUri;
         artist = msg.sender;
+
+        image = _imguri;
         
         emit Setup(uri, artist);
     }

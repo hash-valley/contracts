@@ -51,7 +51,6 @@ contract Vineyard is ERC721 {
 
     string public baseUri;
     uint16 public immutable sellerFee = 750;
-    string public image_uri;
 
     uint16[3][15] private mintReqs;
     uint8[15] public climates;
@@ -72,14 +71,12 @@ contract Vineyard is ERC721 {
     // CONSTRUCTOR
     constructor(
         string memory _baseUri,
-        string memory _image_uri,
         address _addressStorage,
         uint16[3][15] memory _mintReqs,
         uint8[15] memory _climates
     ) ERC721("Hash Valley Vineyard", "VNYD") {
         deployer = _msgSender();
         setBaseURI(_baseUri);
-        image_uri = _image_uri;
         addressStorage = IAddressStorage(_addressStorage);
 
         for (uint8 i = 0; i < _mintReqs.length; ++i) {
@@ -428,7 +425,7 @@ contract Vineyard is ERC721 {
                 "/vineyard/",
                 UriUtils.uint2str(_tokenId),
                 '", "image": "',
-                image_uri,
+                IVotableUri(addressStorage.vineUri()).image(),
                 "/",
                 UriUtils.uint2str(attr[0]),
                 '.png", "description": "Plant, tend and harvest this vineyard to grow your wine collection.", "animation_url": "'
