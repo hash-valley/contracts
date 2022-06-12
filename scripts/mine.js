@@ -2,7 +2,7 @@ const hre = require("hardhat");
 const ethers = hre.ethers;
 
 async function start() {
-  await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
+  await ethers.provider.send("evm_increaseTime", [24 * 60 * 60 + 10]);
   await ethers.provider.send("evm_mine", []);
 }
 

@@ -7,6 +7,8 @@ interface IVineyard {
     function canHarvest(uint256 _tokenId) external view returns (bool);
 
     function canWater(uint256 _tokenId) external view returns (bool);
+
+    function planted(uint256 _tokenId) external view returns (uint256);
 }
 
 contract Multicall {
@@ -15,7 +17,8 @@ contract Multicall {
         NONE,
         PLANT,
         WATER,
-        HARVEST
+        HARVEST,
+        WATER_OR_HARVEST
     }
 
     function getFarmingStats(uint256[] calldata _tokenIds, address vineyard)
@@ -26,15 +29,25 @@ contract Multicall {
         IVineyard Vineyard = IVineyard(vineyard);
         FarmStatus[] memory vals = new FarmStatus[](_tokenIds.length);
         for (uint256 i; i < _tokenIds.length; ++i) {
+            FarmStatus farmStatus = FarmStatus.NONE;
             if (Vineyard.canPlant(_tokenIds[i])) {
-                vals[i] = FarmStatus.PLANT;
+                farmStatus = FarmStatus.PLANT;
             } else if (Vineyard.canHarvest(_tokenIds[i])) {
-                vals[i] = FarmStatus.HARVEST;
-            } else if (Vineyard.canWater(_tokenIds[i])) {
-                vals[i] = FarmStatus.WATER;
-            } else {
-                vals[i] = FarmStatus.NONE;
+                if (
+                    Vineyard.canWater(_tokenIds[i]) &&
+                    Vineyard.planted(_tokenIds[i]) > 0
+                ) {
+                    farmStatus = FarmStatus.WATER_OR_HARVEST;
+                } else {
+                    farmStatus = FarmStatus.HARVEST;
+                }
+            } else if (
+                Vineyard.canWater(_tokenIds[i]) &&
+                Vineyard.planted(_tokenIds[i]) > 0
+            ) {
+                farmStatus = FarmStatus.WATER;
             }
+            vals[i] = farmStatus;
         }
         return vals;
     }
