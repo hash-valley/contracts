@@ -11,6 +11,11 @@ interface QuixoticExchange {
     ) external;
 }
 
+interface DefaultRoyalty {
+    function setDefaultRoyalty(address _receiver, uint96 _feeNumerator)
+        external;
+}
+
 contract RoyaltyManager {
     IAddressStorage private addressStorage;
     QuixoticExchange private quixotic;
@@ -26,10 +31,12 @@ contract RoyaltyManager {
         address vine = addressStorage.vineyard();
         if (msg.sender == addressStorage.wineUri() || msg.sender == bottle) {
             quixotic.setRoyalty(bottle, payable(recipient), sellerFee / 10);
+            DefaultRoyalty(bottle).setDefaultRoyalty(recipient, sellerFee);
         } else if (
             msg.sender == addressStorage.vineUri() || msg.sender == vine
         ) {
             quixotic.setRoyalty(vine, payable(recipient), sellerFee / 10);
+            DefaultRoyalty(vine).setDefaultRoyalty(recipient, sellerFee);
         } else {
             revert("bad royalty");
         }

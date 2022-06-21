@@ -754,7 +754,8 @@ describe("Hash Valley tests", function () {
       await ethers.provider.send("evm_increaseTime", [time]);
 
       await vineyard.harvestMultiple([0, 1]);
-      await vineyard.connect(accounts[1]).harvestMultiple([2, 3]);
+      await vineyard.connect(accounts[1]).harvestMultiple([2]);
+      await vineyard.connect(accounts[2]).harvestMultiple([3]);
       await ethers.provider.send("evm_increaseTime", [10]);
       await ethers.provider.send("evm_mine", []);
     });

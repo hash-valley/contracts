@@ -13,6 +13,7 @@
 pragma solidity ^0.8.12;
 
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "../node_modules/@openzeppelin/contracts/token/common/ERC2981.sol";
 import "./Randomness.sol";
 import "./interfaces/IVinegar.sol";
 import "./interfaces/IRoyaltyManager.sol";
@@ -33,7 +34,7 @@ interface IVineyard {
     function getClimate(uint256 _tokenId) external view returns (uint8);
 }
 
-contract WineBottle is ERC721 {
+contract WineBottle is ERC721, ERC2981 {
     IAddressStorage private addressStorage;
     address public deployer;
     uint256 public totalSupply;
@@ -65,6 +66,7 @@ contract WineBottle is ERC721 {
         deployer = _msgSender();
         addressStorage = IAddressStorage(_addressStorage);
         setBaseURI(_baseUri);
+        _setDefaultRoyalty(_msgSender(), 750);
         eraBounds = _eraBounds;
 
         wineNotes.push([4, 4, 1]);
@@ -632,5 +634,26 @@ contract WineBottle is ERC721 {
             }
         }
         return "";
+    }
+
+    //ERC2981 stuff
+    function setDefaultRoyalty(address _receiver, uint96 _feeNumerator) public {
+        require(
+            _msgSender() == addressStorage.royaltyManager(),
+            "!RoyaltyManager"
+        );
+        _setDefaultRoyalty(_receiver, _feeNumerator);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC2981, ERC721)
+        returns (bool)
+    {
+        return
+            interfaceId == type(IERC2981).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 }

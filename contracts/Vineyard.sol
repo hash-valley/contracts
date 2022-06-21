@@ -12,6 +12,7 @@
 pragma solidity ^0.8.12;
 
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "../node_modules/@openzeppelin/contracts/token/common/ERC2981.sol";
 import "./interfaces/IWineBottle.sol";
 import "./interfaces/IRoyaltyManager.sol";
 import "./interfaces/IVotableUri.sol";
@@ -30,7 +31,7 @@ interface IMerkleDiscount {
     ) external returns (bool);
 }
 
-contract Vineyard is ERC721 {
+contract Vineyard is ERC721, ERC2981 {
     IAddressStorage private addressStorage;
     address public deployer;
     uint256 public totalSupply;
@@ -78,6 +79,7 @@ contract Vineyard is ERC721 {
         deployer = _msgSender();
         setBaseURI(_baseUri);
         addressStorage = IAddressStorage(_addressStorage);
+        _setDefaultRoyalty(_msgSender(), 750);
 
         for (uint8 i = 0; i < _mintReqs.length; ++i) {
             mintReqs[i] = _mintReqs[i];
@@ -517,4 +519,25 @@ contract Vineyard is ERC721 {
     ];
 
     string[6] soilNames = ["Rocky", "Sandy", "Clay", "Boggy", "Peaty", "Mulch"];
+
+    //ERC2981 stuff
+    function setDefaultRoyalty(address _receiver, uint96 _feeNumerator) public {
+        require(
+            _msgSender() == addressStorage.royaltyManager(),
+            "!RoyaltyManager"
+        );
+        _setDefaultRoyalty(_receiver, _feeNumerator);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC2981, ERC721)
+        returns (bool)
+    {
+        return
+            interfaceId == type(IERC2981).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
 }

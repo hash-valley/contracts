@@ -7,7 +7,7 @@ async function start() {
   try {
     addresses = require(`../deployments/deployment_${chainId}.json`);
   } catch {
-    throw("couldnt load addresses");
+    throw "couldnt load addresses";
   }
 
   const accounts = await ethers.getSigners();
@@ -37,12 +37,12 @@ async function start() {
 
   let time = Number(await vineyard.minWaterTime(0));
 
-  await vineyard.connect(accounts[15]).plantMultiple([0]);
+  await vineyard.connect(accounts[15]).plantMultiple([0, 1, 2]);
   for (let i = 0; i <= days; i++) {
     await ethers.provider.send("evm_increaseTime", [time]);
-    await vineyard.connect(accounts[2]).waterMultiple([0]);
+    await vineyard.connect(accounts[2]).waterMultiple([0, 1, 2]);
   }
-  await vineyard.connect(accounts[15]).harvestMultiple([0]);
+  await vineyard.connect(accounts[15]).harvestMultiple([0, 1, 2]);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
