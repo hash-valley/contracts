@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: Viral Public License
 pragma solidity ^0.8.0;
 
-import "./interfaces/IWineBottle.sol";
-import "./interfaces/IAddressStorage.sol";
-import "./interfaces/IVinegar.sol";
-import "./interfaces/IRoyaltyManager.sol";
+import "../interfaces/IWineBottle.sol";
+import "../interfaces/IAddressStorage.sol";
+import "../interfaces/IVinegar.sol";
+import "../interfaces/IRoyaltyManager.sol";
 import "hardhat/console.sol";
 
 contract VotableUriV2 {
