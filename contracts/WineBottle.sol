@@ -14,12 +14,12 @@ pragma solidity ^0.8.12;
 
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../node_modules/@openzeppelin/contracts/token/common/ERC2981.sol";
-import "./Randomness.sol";
+import "./libraries/Randomness.sol";
 import "./interfaces/IVinegar.sol";
 import "./interfaces/IRoyaltyManager.sol";
 import "./interfaces/IVotableUri.sol";
 import "./interfaces/IAddressStorage.sol";
-import "./UriUtils.sol";
+import "./libraries/UriUtils.sol";
 
 interface ICellar {
     function cellarTime(uint256 _tokenID) external view returns (uint256);

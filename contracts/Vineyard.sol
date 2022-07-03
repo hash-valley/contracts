@@ -17,7 +17,7 @@ import "./interfaces/IWineBottle.sol";
 import "./interfaces/IRoyaltyManager.sol";
 import "./interfaces/IVotableUri.sol";
 import "./interfaces/IAddressStorage.sol";
-import "./UriUtils.sol";
+import "./libraries/UriUtils.sol";
 
 interface IGiveawayToken {
     function burnOne() external;

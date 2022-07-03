@@ -5,7 +5,7 @@ const fs = require("fs");
 async function deploy() {
   const network = await hre.ethers.provider.getNetwork();
 
-  console.log('beginning deployments to network id', network.chainId)
+  console.log("beginning deployments to network id", network.chainId);
 
   const Storage = await hre.ethers.getContractFactory("AddressStorage");
   const storage = await Storage.deploy();
@@ -93,7 +93,7 @@ async function deploy() {
   const Give = await hre.ethers.getContractFactory("GiveawayToken");
   const give = await Give.deploy();
   await give.deployed();
-  console.log("GiveToken deployed to:", give.address);
+  console.log("GiveawayToken deployed to:", give.address);
 
   const Multi = await hre.ethers.getContractFactory("Multicall");
   const multi = await Multi.deploy();
@@ -134,20 +134,19 @@ async function deploy() {
     2
   );
 
-  // if (!fs.existsSync("deployments")) {
-  //   fs.mkdirSync("deployments");
-  // }
+  if (!fs.existsSync("deployments")) {
+    fs.mkdirSync("deployments");
+  }
 
-  // fs.writeFileSync(
-  //   `deployments/deployment_${network.chainId}.json`,
-  //   data,
-  //   (err) => {
-  //     if (err) {
-  //       throw err;
-  //     }
-  //     console.log("JSON data is saved.");
-  //   }
-  // );
+  fs.writeFileSync(
+    `deployments/deployment_${network.chainId}.json`,
+    data,
+    (err) => {
+      if (err) {
+        throw err;
+      }
+    }
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere

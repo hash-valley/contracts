@@ -49,7 +49,7 @@ module.exports = {
     },
     optimism: {
       url: `https://opt-mainnet.g.alchemy.com/v2/${config.alchemy_op}`,
-      accounts: [`0x${config.test_key}`],
+      accounts: [`0x${config.deployer_key}`],
     },
   },
   abiExporter: {
@@ -60,7 +60,7 @@ module.exports = {
   },
   gasReporter: {
     currency: "USD",
-    gasPrice: 50,
+    gasPrice: 15,
     coinmarketcap: config.coinmarketcap,
   },
   etherscan: {

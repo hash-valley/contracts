@@ -309,8 +309,8 @@ describe("Hash Valley tests", function () {
 
     it("token uri", async () => {
       await vineyard.connect(accounts[1]).newVineyards([12, 130, 0, 3]);
-      let uri = await vineyard.tokenURI(0);
-      console.log(uri);
+      const uri = await vineyard.tokenURI(0);
+      console.log(Buffer.from(uri.slice(29), "base64").toString("ascii"));
     });
   });
 
@@ -461,7 +461,9 @@ describe("Hash Valley tests", function () {
       expect(await vineyard.connect(accounts[1]).harvest(0))
         .to.emit(vineyard, "Harvested")
         .withArgs(0, 1, 0);
-      console.log(await bottle.tokenURI(0));
+
+      const uri = await bottle.tokenURI(0);
+      console.log(Buffer.from(uri.slice(29), "base64").toString("ascii"));
 
       await ethers.provider.send("evm_increaseTime", [time]);
       await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(

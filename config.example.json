@@ -2,8 +2,13 @@
   "coinmarketcap": "",
   "alchemy": "",
   "alchemy_rink": "",
+  "alchemy_op_kovan": "",
+  "alchemy_op": "",
   "test_key": "",
+  "deployer_key": "",
   "etherscan": "",
+  "vine_animation_uri": "ipfs://...",
+  "bottle_animation_uri": "ipfs://...",
   "vine_img_uri": "ipfs://...",
   "bottle_img_uri": "ipfs://...",
   "vine_base_uri": "localhost:3000/api/vine",
@@ -42,5 +47,7 @@
     "409968000031536000"
   ],
   "climates": [0, 1, 2, 3, 4, 5, 6, 3, 7, 8, 1, 9, 4, 1, 2],
-  "discountMerkleRoot": ""
+  "discountMerkleRoot": "",
+  "kovan_quixotic": "0x6749aB437cd8803ecCC3aD707F969298Cda65921",
+  "op_quixotic": "0x065e8A87b8F11aED6fAcf9447aBe5E8C5D7502b6"
 }
