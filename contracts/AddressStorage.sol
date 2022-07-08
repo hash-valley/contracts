@@ -1,8 +1,8 @@
-//SPDX-License-Identifier: Viral Public License
+// SPDX-License-Identifier: Viral Public License
 pragma solidity ^0.8.0;
 
 import "./interfaces/IAddressStorage.sol";
-import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract AddressStorage is IAddressStorage, Ownable {
     address public override cellar;

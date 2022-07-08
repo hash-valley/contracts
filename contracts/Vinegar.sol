@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: Viral Public License
+// SPDX-License-Identifier: Viral Public License
 /**
 .___     .___ .______  ._______._____  .______  .______  
 |   |___ : __|:      \ : .____/:_ ___\ :      \ : __   \ 
@@ -12,7 +12,7 @@
  */
 pragma solidity ^0.8.0;
 
-import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IAddressStorage.sol";
 
 contract Vinegar is ERC20 {

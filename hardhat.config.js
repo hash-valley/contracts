@@ -47,7 +47,7 @@ module.exports = {
       url: `https://opt-kovan.g.alchemy.com/v2/${config.alchemy_op_kovan}`,
       accounts: [`0x${config.test_key}`],
     },
-    optimism: {
+    optimisticEthereum: {
       url: `https://opt-mainnet.g.alchemy.com/v2/${config.alchemy_op}`,
       accounts: [`0x${config.deployer_key}`],
     },

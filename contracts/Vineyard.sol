@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: Viral Public License
+// SPDX-License-Identifier: Viral Public License
 /**
 .___     .___ .______  ._______ ____   ____.______  .______  .______  
 |   |___ : __|:      \ : .____/ \   \_/   /:      \ : __   \ :_ _   \ 
@@ -11,8 +11,8 @@
  */
 pragma solidity ^0.8.12;
 
-import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "../node_modules/@openzeppelin/contracts/token/common/ERC2981.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "./interfaces/IWineBottle.sol";
 import "./interfaces/IRoyaltyManager.sol";
 import "./interfaces/IVotableUri.sol";
