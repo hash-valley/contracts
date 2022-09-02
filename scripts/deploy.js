@@ -13,8 +13,8 @@ async function deploy() {
   console.log("Address Storage deployed to:", storage.address);
 
   let market_address;
-  if (network.chainId === 69) {
-    //kovan
+  if (network.chainId === 420) {
+    //goerli
     market_address = config.kovan_quixotic;
   } else if (network.chainId === 10) {
     // optimism
@@ -35,13 +35,13 @@ async function deploy() {
   await royalty.deployed();
   console.log("Royalty Manager deployed to:", royalty.address);
 
-  const Merkle = await hre.ethers.getContractFactory("MerkleDiscount");
-  const merkle = await Merkle.deploy(
-    config.discountMerkleRoot,
-    storage.address
-  );
-  await merkle.deployed();
-  console.log("MerkleDiscount deployed to:", merkle.address);
+  // const Merkle = await hre.ethers.getContractFactory("MerkleDiscount");
+  // const merkle = await Merkle.deploy(
+  //   config.discountMerkleRoot,
+  //   storage.address
+  // );
+  // await merkle.deployed();
+  // console.log("MerkleDiscount deployed to:", merkle.address);
 
   const VineUri = await hre.ethers.getContractFactory("VotableUri");
   const vineUri = await VineUri.deploy(
@@ -100,6 +100,12 @@ async function deploy() {
   await multi.deployed();
   console.log("Multicall deployed to:", multi.address);
 
+  const SaleParams = await hre.ethers.getContractFactory("SaleParams");
+  const saleParams = await SaleParams.deploy();
+  await saleParams.deployed();
+  await vineyard.setSaleParams(saleParams.address);
+  console.log("SaleParams deployed to:", saleParams.address);
+
   await storage.setAddresses(
     cellar.address,
     vinegar.address,
@@ -107,7 +113,7 @@ async function deploy() {
     bottle.address,
     give.address,
     royalty.address,
-    merkle.address,
+    "0x0000000000000000000000000000000000000000",
     wineUri.address,
     vineUri.address
   );
@@ -125,10 +131,11 @@ async function deploy() {
       giveaway_address: give.address,
       address_storage_address: storage.address,
       royalty_address: royalty.address,
-      merkle_address: merkle.address,
+      merkle_address: "0x0000000000000000000000000000000000000000",
       wine_uri_address: wineUri.address,
       vine_uri_address: vineUri.address,
       multi_address: multi.address,
+      sale_params_address: saleParams.address,
     },
     null,
     2

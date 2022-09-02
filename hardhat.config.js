@@ -43,8 +43,8 @@ module.exports = {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${config.alchemy_rink}`,
       accounts: [`0x${config.test_key}`],
     },
-    optimisticKovan: {
-      url: `https://opt-kovan.g.alchemy.com/v2/${config.alchemy_op_kovan}`,
+    optimisticGoerli: {
+      url: `https://opt-goerli.g.alchemy.com/v2/${config.alchemy_op_goerli}`,
       accounts: [`0x${config.test_key}`],
     },
     optimisticEthereum: {

@@ -23,22 +23,21 @@ interface IGiveawayToken {
     function burnOne() external;
 }
 
-interface IMerkleDiscount {
-    function claim(
-        uint256 index,
-        address account,
-        bytes32[] calldata merkleProof
-    ) external returns (bool);
+interface ISaleParams {
+    function getSalesPrice(uint256 supply) external pure returns (uint256);
 }
 
 contract Vineyard is ERC721, ERC2981 {
     IAddressStorage private addressStorage;
+    address private saleParams;
     address public deployer;
     uint256 public totalSupply;
     uint256 public immutable firstSeasonLength = 3 weeks;
     uint256 public immutable seasonLength = 12 weeks;
     uint256 public immutable maxVineyards = 5500;
     uint256 public gameStart;
+
+    mapping(address => uint8) private freeMints;
 
     /// @dev attributes are
     /// location, elevation, isNegative, soil
@@ -103,6 +102,12 @@ contract Vineyard is ERC721, ERC2981 {
         return addressStorage.royaltyManager();
     }
 
+    /// @notice to manage sales params
+    function setSaleParams(address _address) public {
+        require(_msgSender() == deployer, "!deployer");
+        saleParams = _address;
+    }
+
     /// @notice validates minting attributes
     function validateAttributes(uint16[] calldata _tokenAttributes)
         public
@@ -131,31 +136,12 @@ contract Vineyard is ERC721, ERC2981 {
     /// @notice mints a new vineyard
     /// @param _tokenAttributes array of attribute ints [location, elevation, elevationIsNegative (0 or 1), soilType]
     function newVineyards(uint16[] calldata _tokenAttributes) public payable {
-        // first 100 free
-        if (totalSupply >= 100) {
-            require(msg.value >= 0.07 ether, "Value below price");
+        uint256 price = ISaleParams(saleParams).getSalesPrice(totalSupply);
+        require(msg.value >= price, "Value below price");
+        if (price == 0) {
+            require(freeMints[_msgSender()] < 5, "max free mints");
+            freeMints[_msgSender()]++;
         }
-
-        _mintVineyard(_tokenAttributes, false);
-    }
-
-    /// @notice mints a new vineyard with discount
-    /// @param _tokenAttributes array of attribute ints [location, elevation, elevationIsNegative (0 or 1), soilType]
-    function newVineyardsDiscount(
-        uint16[] calldata _tokenAttributes,
-        uint256 index,
-        bytes32[] calldata merkleProof
-    ) public payable {
-        require(totalSupply >= 100, "not yet");
-        require(msg.value >= 0.04 ether, "Value below price");
-        require(
-            IMerkleDiscount(addressStorage.merkle()).claim(
-                index,
-                _msgSender(),
-                merkleProof
-            ),
-            "invalid claim"
-        );
         _mintVineyard(_tokenAttributes, false);
     }
 

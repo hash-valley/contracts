@@ -2,7 +2,7 @@
   "coinmarketcap": "",
   "alchemy": "",
   "alchemy_rink": "",
-  "alchemy_op_kovan": "",
+  "alchemy_op_goerli": "",
   "alchemy_op": "",
   "test_key": "",
   "deployer_key": "",
@@ -48,6 +48,6 @@
   ],
   "climates": [0, 1, 2, 3, 4, 5, 6, 3, 7, 8, 1, 9, 4, 1, 2],
   "discountMerkleRoot": "",
-  "kovan_quixotic": "0x6749aB437cd8803ecCC3aD707F969298Cda65921",
-  "op_quixotic": "0x065e8A87b8F11aED6fAcf9447aBe5E8C5D7502b6"
+  "goerli_quixotic": "0xEE6fD1B9f24c28CB2B60BCE82b507cc1199372f0",
+  "op_quixotic": "0x3F9DA045b0F77d707eA4061110339C4Ea8ecFA70"
 }

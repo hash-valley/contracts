@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { utils } = ethers;
 
 const config = require("../config");
 
@@ -93,6 +94,11 @@ describe("Hash Valley tests", function () {
     multi = await Multi.deploy();
     await multi.deployed();
 
+    const SaleParams = await hre.ethers.getContractFactory("SaleParams");
+    saleParams = await SaleParams.deploy();
+    await saleParams.deployed();
+    await vineyard.setSaleParams(saleParams.address);
+
     await storage.setAddresses(
       cellar.address,
       vinegar.address,
@@ -128,7 +134,38 @@ describe("Hash Valley tests", function () {
       expect(await vineyard.owner()).to.equal(royalty.address);
     });
 
-    it("first 100 are free, 0.07 eth after that", async () => {
+    it("Sale params", async () => {
+      const vals = await Promise.all([
+        saleParams.getSalesPrice(999),
+        saleParams.getSalesPrice(1000),
+        saleParams.getSalesPrice(1500),
+        saleParams.getSalesPrice(2000),
+        saleParams.getSalesPrice(2500),
+        saleParams.getSalesPrice(3000),
+        saleParams.getSalesPrice(3500),
+        saleParams.getSalesPrice(4000),
+        saleParams.getSalesPrice(4500),
+        saleParams.getSalesPrice(5000),
+        saleParams.getSalesPrice(5499),
+        saleParams.getSalesPrice(5500),
+      ]);
+      expect(vals.map((x) => x.toString())).to.eql([
+        "0",
+        utils.parseEther("0.01").toString(),
+        utils.parseEther("0.02").toString(),
+        utils.parseEther("0.03").toString(),
+        utils.parseEther("0.04").toString(),
+        utils.parseEther("0.05").toString(),
+        utils.parseEther("0.06").toString(),
+        utils.parseEther("0.07").toString(),
+        utils.parseEther("0.08").toString(),
+        utils.parseEther("0.09").toString(),
+        utils.parseEther("0.09").toString(),
+        utils.parseEther("0.1").toString(),
+      ]);
+    });
+
+    it.skip("first 100 are free, 0.07 eth after that", async () => {
       for (let i = 0; i < 100; i++) {
         const tx = await vineyard
           .connect(accounts[1])
@@ -159,7 +196,7 @@ describe("Hash Valley tests", function () {
         );
     });
 
-    it("Merkle discount can be used after first 100 are minted", async () => {
+    it.skip("Merkle discount can be used after first 100 are minted", async () => {
       for (let i = 0; i < 100; i++) {
         await vineyard.connect(accounts[1]).newVineyards([4, 2, 0, 4]);
       }
@@ -233,13 +270,13 @@ describe("Hash Valley tests", function () {
       const max = Number(await vineyard.maxVineyards());
       for (let i = 0; i < max; i++) {
         await vineyard.newVineyards([4, 2, 0, 4], {
-          value: ethers.utils.parseEther("0.07"),
+          value: ethers.utils.parseEther("0.09"),
         });
       }
 
       await expect(
         vineyard.newVineyards([4, 2, 0, 4], {
-          value: ethers.utils.parseEther("0.07"),
+          value: ethers.utils.parseEther("0.09"),
         })
       ).to.be.revertedWith("Max vineyards minted");
 

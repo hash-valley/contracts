@@ -11,8 +11,8 @@ async function deploy() {
   }
 
   let market_address;
-  if (network.chainId === 69) {
-    //kovan
+  if (network.chainId === 420) {
+    //alchemy_op_goerli
     market_address = "0x6749aB437cd8803ecCC3aD707F969298Cda65921";
   } else if (network.chainId === 10) {
     // optimism
