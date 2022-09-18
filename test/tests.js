@@ -18,7 +18,6 @@ describe("Hash Valley tests", function () {
   let storage;
   let royalty;
   let quixotic;
-  let merkle;
 
   let multi;
 
@@ -57,13 +56,6 @@ describe("Hash Valley tests", function () {
       config.eraBounds
     );
     await bottle.deployed();
-
-    const Merkle = await hre.ethers.getContractFactory("MerkleDiscount");
-    merkle = await Merkle.deploy(
-      "0x7e4de12c8a18b1caf55b81b3ffec618a10194aa48e09821e3d3775bf280ba4c5",
-      storage.address
-    );
-    await merkle.deployed();
 
     const VineUri = await hre.ethers.getContractFactory("VotableUri");
     vineUri = await VineUri.deploy(
@@ -106,7 +98,6 @@ describe("Hash Valley tests", function () {
       bottle.address,
       token.address,
       royalty.address,
-      merkle.address,
       wineUri.address,
       vineUri.address
     );
@@ -127,7 +118,6 @@ describe("Hash Valley tests", function () {
       expect(await storage.cellar()).to.equal(cellar.address);
       expect(await storage.bottle()).to.equal(bottle.address);
       expect(await storage.vinegar()).to.equal(vinegar.address);
-      expect(await storage.merkle()).to.equal(merkle.address);
     });
 
     it("Owner set to royalty manager", async () => {
@@ -193,62 +183,6 @@ describe("Hash Valley tests", function () {
           "0x0000000000000000000000000000000000000000",
           accounts[1].address,
           100
-        );
-    });
-
-    it.skip("Merkle discount can be used after first 100 are minted", async () => {
-      for (let i = 0; i < 100; i++) {
-        await vineyard.connect(accounts[1]).newVineyards([4, 2, 0, 4]);
-      }
-      const proofs = [
-        ["0x3f68e79174daf15b50e15833babc8eb7743e730bb9606f922c48e95314c3905c"],
-        ["0x8d7516f92f86ff2bff7638117eeefe54f86ce065a68c3b0f6c4b3d9bfb491ad6"],
-      ];
-
-      // bad calls
-      await expect(
-        vineyard.newVineyardsDiscount([4, 2, 0, 4], 0, proofs[0], {
-          value: ethers.utils.parseEther("0.03"),
-        })
-      ).to.be.revertedWith("Value below price");
-      await expect(
-        vineyard.newVineyardsDiscount([4, 2, 0, 4], 1, proofs[0], {
-          value: ethers.utils.parseEther("0.04"),
-        })
-      ).to.be.revertedWith("MerkleDistributor: Invalid proof.");
-      await expect(
-        vineyard.newVineyardsDiscount([4, 2, 0, 4], 0, proofs[1], {
-          value: ethers.utils.parseEther("0.04"),
-        })
-      ).to.be.revertedWith("MerkleDistributor: Invalid proof.");
-
-      // good calls
-      await expect(
-        vineyard
-          .connect(accounts[0])
-          .newVineyardsDiscount([4, 2, 0, 4], 0, proofs[0], {
-            value: ethers.utils.parseEther("0.04"),
-          })
-      )
-        .to.emit(vineyard, "Transfer")
-        .withArgs(
-          "0x0000000000000000000000000000000000000000",
-          accounts[0].address,
-          100
-        );
-
-      await expect(
-        vineyard
-          .connect(accounts[1])
-          .newVineyardsDiscount([4, 2, 0, 4], 1, proofs[1], {
-            value: ethers.utils.parseEther("0.04"),
-          })
-      )
-        .to.emit(vineyard, "Transfer")
-        .withArgs(
-          "0x0000000000000000000000000000000000000000",
-          accounts[1].address,
-          101
         );
     });
 
@@ -348,6 +282,23 @@ describe("Hash Valley tests", function () {
       await vineyard.connect(accounts[1]).newVineyards([12, 130, 0, 3]);
       const uri = await vineyard.tokenURI(0);
       console.log(Buffer.from(uri.slice(29), "base64").toString("ascii"));
+    });
+
+    it("airdrop", async () => {
+      await token.airdrop([accounts[11].address, accounts[12].address], [2, 1]);
+      await expect(
+        token.airdrop([accounts[11].address], [4])
+      ).to.be.revertedWith("!");
+      await vineyard.connect(accounts[11]).newVineyardGiveaway([12, 130, 0, 3]);
+      await vineyard.connect(accounts[11]).newVineyardGiveaway([12, 130, 0, 3]);
+      await expect(
+        vineyard.connect(accounts[11]).newVineyardGiveaway([12, 130, 0, 3])
+      ).to.be.revertedWith("ERC20: burn amount exceeds balance");
+
+      await vineyard.connect(accounts[12]).newVineyardGiveaway([12, 130, 0, 3]);
+      await expect(
+        vineyard.connect(accounts[12]).newVineyardGiveaway([12, 130, 0, 3])
+      ).to.be.revertedWith("ERC20: burn amount exceeds balance");
     });
   });
 

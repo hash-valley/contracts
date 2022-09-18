@@ -11,7 +11,6 @@ contract AddressStorage is IAddressStorage, Ownable {
     address public override bottle;
     address public override giveawayToken;
     address public override royaltyManager;
-    address public override merkle;
 
     address public override wineUri;
     address public override vineUri;
@@ -33,7 +32,6 @@ contract AddressStorage is IAddressStorage, Ownable {
         address _bottle,
         address _giveawayToken,
         address _royaltyManager,
-        address _merkle,
         address _wineUri,
         address _vineUri
     ) public {
@@ -45,7 +43,6 @@ contract AddressStorage is IAddressStorage, Ownable {
         bottle = _bottle;
         giveawayToken = _giveawayToken;
         royaltyManager = _royaltyManager;
-        merkle = _merkle;
         wineUri = _wineUri;
         vineUri = _vineUri;
         addressesSet = true;

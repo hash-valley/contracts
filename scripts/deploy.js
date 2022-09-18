@@ -35,14 +35,6 @@ async function deploy() {
   await royalty.deployed();
   console.log("Royalty Manager deployed to:", royalty.address);
 
-  // const Merkle = await hre.ethers.getContractFactory("MerkleDiscount");
-  // const merkle = await Merkle.deploy(
-  //   config.discountMerkleRoot,
-  //   storage.address
-  // );
-  // await merkle.deployed();
-  // console.log("MerkleDiscount deployed to:", merkle.address);
-
   const VineUri = await hre.ethers.getContractFactory("VotableUri");
   const vineUri = await VineUri.deploy(
     storage.address,
@@ -131,7 +123,6 @@ async function deploy() {
       giveaway_address: give.address,
       address_storage_address: storage.address,
       royalty_address: royalty.address,
-      merkle_address: "0x0000000000000000000000000000000000000000",
       wine_uri_address: wineUri.address,
       vine_uri_address: vineUri.address,
       multi_address: multi.address,

@@ -12,4 +12,17 @@ contract GiveawayToken is ERC20 {
     function burnOne() external {
         _burn(tx.origin, 1e18);
     }
+
+    uint8 private airdropped = 0;
+
+    /// @notice can be called once to compensate minters of original release
+    function airdrop(address[] calldata recipients, uint256[] calldata values)
+        public
+    {
+        require(airdropped == 0, "!");
+        airdropped = 1;
+        for (uint256 i = 0; i < recipients.length; i++) {
+            _mint(recipients[i], values[i] * 1e18);
+        }
+    }
 }
