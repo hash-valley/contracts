@@ -105,13 +105,23 @@ async function deploy() {
     bottle.address,
     give.address,
     royalty.address,
-    "0x0000000000000000000000000000000000000000",
     wineUri.address,
     vineUri.address
   );
+  console.log("addresses set");
 
   await vineyard.initR();
   await bottle.initR();
+  console.log("royalties initialized");
+
+  await saleParams.airdrop(config.airdrop_recipients, config.airdrop_values);
+  console.log("vineyard airdrop complete");
+
+  const TY = await hre.ethers.getContractFactory("Badge");
+  const ty = await TY.deploy(config.ty_uri);
+  await ty.deployed();
+  await ty.airdrop(config.airdrop_recipients);
+  console.log("ty airdrop complete");
 
   const data = JSON.stringify(
     {
