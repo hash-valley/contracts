@@ -90,14 +90,17 @@ async function deploy() {
   const Alchemy = await hre.ethers.getContractFactory("Alchemy");
   const alchemy = await Alchemy.deploy(storage.address);
   await alchemy.deployed();
+  console.log("Alchemy deployed to:", alchemy.address);
 
   const Grape = await hre.ethers.getContractFactory("Grape");
   const grape = await Grape.deploy(storage.address);
   await grape.deployed();
+  console.log("Grape deployed to:", grape.address);
 
   const SpellParams = await hre.ethers.getContractFactory("SpellParams");
   const spellParams = await SpellParams.deploy(storage.address);
   await spellParams.deployed();
+  console.log("SpellParams deployed to:", spellParams.address);
 
   const Multi = await hre.ethers.getContractFactory("Multicall");
   const multi = await Multi.deploy();

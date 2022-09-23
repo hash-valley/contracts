@@ -72,6 +72,12 @@ contract Vineyard is ERC721, ERC2981 {
     event Planted(uint256 tokenId, uint256 season);
     event Harvested(uint256 tokenId, uint256 season, uint256 bottleId);
     event HarvestFailure(uint256 tokenId, uint256 season);
+    event GrapesHarvested(
+        uint256 tokenId,
+        uint256 season,
+        uint256 harvested,
+        uint256 remaining
+    );
 
     // CONSTRUCTOR
     constructor(
@@ -361,13 +367,21 @@ contract Vineyard is ERC721, ERC2981 {
         require(_currSeason > 0, "!started");
 
         uint256 timePassed = block.timestamp - seasonStart;
-        uint256 harvestable = (100_000 * (maxGrapes(_tokenId) * timePassed)) /
+        uint256 _maxGrapes = maxGrapes(_tokenId);
+        uint256 _grapesHarvested = grapesHarvested[_tokenId];
+        uint256 harvestable = (100_000 * (_maxGrapes * timePassed)) /
             (_currSeason == 1 ? firstSeasonLength : seasonLength) /
             100_000 -
-            grapesHarvested[_tokenId];
+            _grapesHarvested;
 
         grapesHarvested[_tokenId] += harvestable;
         IGrape(addressStorage.grape()).mint(harvestable);
+        emit GrapesHarvested(
+            _tokenId,
+            _currSeason,
+            harvestable,
+            _maxGrapes - _grapesHarvested - harvestable
+        );
     }
 
     // VIEWS
