@@ -138,6 +138,12 @@ async function deploy() {
   await ty.airdrop(config.airdrop_recipients);
   console.log("ty airdrop complete");
 
+  if (network.chainId === 31337) {
+    console.log("unlocking locales");
+    await vineyard.unlockLocale();
+    await vineyard.unlockLocale();
+  }
+
   const data = JSON.stringify(
     {
       startBlock: storage_deploy_tx.deployTransaction.blockNumber,
