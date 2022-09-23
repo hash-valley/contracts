@@ -1,6 +1,10 @@
-const { expect } = require("chai");
+const chai = require("chai");
+const { expect } = chai;
 const { ethers } = require("hardhat");
 const { utils } = ethers;
+const { solidity } = require("ethereum-waffle");
+
+chai.use(solidity);
 
 const config = require("../config");
 
@@ -23,6 +27,10 @@ describe("Hash Valley tests", function () {
 
   let wineUri;
   let vineUri;
+
+  let grape;
+  let alchemy;
+  let spellParams;
 
   const deploy = async () => {
     const Quixotic = await hre.ethers.getContractFactory("DummyQuixotic");
@@ -78,9 +86,21 @@ describe("Hash Valley tests", function () {
     vinegar = await Vinegar.deploy(storage.address);
     await vinegar.deployed();
 
+    const Alchemy = await hre.ethers.getContractFactory("Alchemy");
+    alchemy = await Alchemy.deploy(storage.address);
+    await alchemy.deployed();
+
+    const Grape = await hre.ethers.getContractFactory("Grape");
+    grape = await Grape.deploy(storage.address);
+    await grape.deployed();
+
     const Token = await hre.ethers.getContractFactory("GiveawayToken");
     token = await Token.deploy();
     await token.deployed();
+
+    const SpellParams = await hre.ethers.getContractFactory("SpellParams");
+    spellParams = await SpellParams.deploy(storage.address);
+    await spellParams.deployed();
 
     const Multi = await hre.ethers.getContractFactory("Multicall");
     multi = await Multi.deploy();
@@ -98,6 +118,9 @@ describe("Hash Valley tests", function () {
       bottle.address,
       token.address,
       royalty.address,
+      alchemy.address,
+      grape.address,
+      spellParams.address,
       wineUri.address,
       vineUri.address
     );
@@ -157,9 +180,7 @@ describe("Hash Valley tests", function () {
 
     it.skip("first 100 are free, 0.07 eth after that", async () => {
       for (let i = 0; i < 100; i++) {
-        const tx = await vineyard
-          .connect(accounts[1])
-          .newVineyards([4, 2, 0, 4]);
+        const tx = await vineyard.connect(accounts[1]).newVineyards([4, 2, 4]);
         expect(tx)
           .to.emit(vineyard, "Transfer")
           .withArgs(
@@ -169,14 +190,14 @@ describe("Hash Valley tests", function () {
           );
       }
       await expect(
-        vineyard.connect(accounts[1]).newVineyards([4, 2, 0, 4], {
+        vineyard.connect(accounts[1]).newVineyards([4, 2, 4], {
           value: ethers.utils.parseEther("0.04"),
         })
       ).to.be.revertedWith("Value below price");
 
       const tx = await vineyard
         .connect(accounts[1])
-        .newVineyards([4, 2, 0, 4], { value: ethers.utils.parseEther(".07") });
+        .newVineyards([4, 2, 4], { value: ethers.utils.parseEther(".07") });
       expect(tx)
         .to.emit(vineyard, "Transfer")
         .withArgs(
@@ -187,7 +208,7 @@ describe("Hash Valley tests", function () {
     });
 
     it("use giveaway token", async () => {
-      const tx = await vineyard.newVineyardGiveaway([4, 2, 0, 4]);
+      const tx = await vineyard.newVineyardGiveaway([4, 2, 4]);
       expect(tx)
         .to.emit(vineyard, "Transfer")
         .withArgs(
@@ -196,25 +217,25 @@ describe("Hash Valley tests", function () {
           0
         );
       await expect(
-        vineyard.connect(accounts[1]).newVineyardGiveaway([4, 2, 0, 4])
+        vineyard.connect(accounts[1]).newVineyardGiveaway([4, 2, 4])
       ).to.be.revertedWith("ERC20: burn amount exceeds balance");
     });
 
     it.skip("use giveaway token with max supply", async () => {
       const max = Number(await vineyard.maxVineyards());
       for (let i = 0; i < max; i++) {
-        await vineyard.newVineyards([4, 2, 0, 4], {
+        await vineyard.newVineyards([4, 2, 4], {
           value: ethers.utils.parseEther("0.09"),
         });
       }
 
       await expect(
-        vineyard.newVineyards([4, 2, 0, 4], {
-          value: ethers.utils.parseEther("0.09"),
+        vineyard.newVineyards([4, 2, 4], {
+          value: ethers.utils.parseEther("0.1"),
         })
       ).to.be.revertedWith("Max vineyards minted");
 
-      const tx = await vineyard.newVineyardGiveaway([4, 2, 0, 4]);
+      const tx = await vineyard.newVineyardGiveaway([4, 2, 4]);
       expect(tx)
         .to.emit(vineyard, "Transfer")
         .withArgs(
@@ -226,22 +247,16 @@ describe("Hash Valley tests", function () {
 
     it("Correct number of params", async () => {
       await expect(
-        vineyard.connect(accounts[1]).newVineyards([1, 2, 3, 4, 5])
+        vineyard.connect(accounts[1]).newVineyards([1, 2, 3, 4])
       ).to.be.revertedWith("wrong #params");
 
       await expect(
-        vineyard.connect(accounts[1]).newVineyards([1, 2, 3])
+        vineyard.connect(accounts[1]).newVineyards([1, 2])
       ).to.be.revertedWith("wrong #params");
-    });
-
-    it("Third attribute must be 0 or 1", async () => {
-      await expect(
-        vineyard.connect(accounts[1]).newVineyards([4, 2, 3, 4])
-      ).to.be.revertedWith("inv 3rd param");
     });
 
     it("Only owner can withdraw", async () => {
-      await vineyard.connect(accounts[1]).newVineyards([12, 130, 0, 3]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 130, 3]);
 
       await expect(
         vineyard.connect(accounts[1]).withdrawAll()
@@ -251,23 +266,22 @@ describe("Hash Valley tests", function () {
     });
 
     it("get params", async () => {
-      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
       const attr = await vineyard.getTokenAttributes(0);
       expect(attr[0].toString()).to.equal("12");
       expect(attr[1].toString()).to.equal("13");
-      expect(attr[2].toString()).to.equal("0");
-      expect(attr[3].toString()).to.equal("4");
+      expect(attr[2].toString()).to.equal("4");
     });
 
     it("can't plant before game start", async () => {
-      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
       await expect(vineyard.connect(accounts[1]).plant(0)).to.be.revertedWith(
         "Not planting time"
       );
     });
 
     it("can't harvest before game start", async () => {
-      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
       await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
         "Not harvest time"
       );
@@ -279,7 +293,7 @@ describe("Hash Valley tests", function () {
     });
 
     it("token uri", async () => {
-      await vineyard.connect(accounts[1]).newVineyards([12, 130, 0, 3]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 130, 3]);
       const uri = await vineyard.tokenURI(0);
       console.log(Buffer.from(uri.slice(29), "base64").toString("ascii"));
     });
@@ -289,15 +303,15 @@ describe("Hash Valley tests", function () {
       await expect(
         token.airdrop([accounts[11].address], [4])
       ).to.be.revertedWith("!");
-      await vineyard.connect(accounts[11]).newVineyardGiveaway([12, 130, 0, 3]);
-      await vineyard.connect(accounts[11]).newVineyardGiveaway([12, 130, 0, 3]);
+      await vineyard.connect(accounts[11]).newVineyardGiveaway([12, 130, 3]);
+      await vineyard.connect(accounts[11]).newVineyardGiveaway([12, 130, 3]);
       await expect(
-        vineyard.connect(accounts[11]).newVineyardGiveaway([12, 130, 0, 3])
+        vineyard.connect(accounts[11]).newVineyardGiveaway([12, 130, 3])
       ).to.be.revertedWith("ERC20: burn amount exceeds balance");
 
-      await vineyard.connect(accounts[12]).newVineyardGiveaway([12, 130, 0, 3]);
+      await vineyard.connect(accounts[12]).newVineyardGiveaway([12, 130, 3]);
       await expect(
-        vineyard.connect(accounts[12]).newVineyardGiveaway([12, 130, 0, 3])
+        vineyard.connect(accounts[12]).newVineyardGiveaway([12, 130, 3])
       ).to.be.revertedWith("ERC20: burn amount exceeds balance");
     });
   });
@@ -305,7 +319,7 @@ describe("Hash Valley tests", function () {
   describe("Game flow", function () {
     beforeEach(async () => {
       await deploy();
-      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
       await vineyard.start();
       await ethers.provider.send("evm_mine", []);
     });
@@ -385,7 +399,7 @@ describe("Hash Valley tests", function () {
 
       let thirdWater = Number(await vineyard.watered(0));
       expect(thirdWater).to.be.greaterThanOrEqual(secondWater + time);
-      expect(thirdWater).to.be.lessThanOrEqual(secondWater + time + 2);
+      expect(thirdWater).to.be.lessThanOrEqual(secondWater + time + 3);
 
       // can't water over 48 hours later
       time = time + 2;
@@ -525,8 +539,8 @@ describe("Hash Valley tests", function () {
     });
 
     it("plant multiple", async () => {
-      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
-      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
 
       expect(Number(await vineyard.planted(0))).to.equal(0);
       expect(Number(await vineyard.planted(1))).to.equal(0);
@@ -539,8 +553,8 @@ describe("Hash Valley tests", function () {
     });
 
     it("water multiple", async () => {
-      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
-      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
       await vineyard.connect(accounts[1]).plantMultiple([0, 1, 2]);
 
       let planted0 = Number(await vineyard.watered(0));
@@ -565,8 +579,8 @@ describe("Hash Valley tests", function () {
     });
 
     it("harvest multiple", async () => {
-      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
-      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
       await vineyard.connect(accounts[1]).plantMultiple([0, 1, 2]);
 
       let time = Number(await vineyard.minWaterTime(0));
@@ -636,9 +650,9 @@ describe("Hash Valley tests", function () {
   describe("Cellar", function () {
     beforeEach(async () => {
       await deploy();
-      await vineyard.newVineyards([12, 13, 0, 4]);
-      await vineyard.newVineyards([12, 13, 0, 4]);
-      await vineyard.newVineyards([12, 13, 0, 4]);
+      await vineyard.newVineyards([12, 13, 4]);
+      await vineyard.newVineyards([12, 13, 4]);
+      await vineyard.newVineyards([12, 13, 4]);
       await vineyard.start();
       await vineyard.plantMultiple([0, 1, 2]);
 
@@ -729,10 +743,10 @@ describe("Hash Valley tests", function () {
   describe("CouncilV1", function () {
     beforeEach(async () => {
       await deploy();
-      await vineyard.newVineyards([12, 13, 0, 4]);
-      await vineyard.newVineyards([12, 13, 0, 4]);
-      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
-      await vineyard.connect(accounts[2]).newVineyards([12, 13, 0, 4]);
+      await vineyard.newVineyards([12, 13, 4]);
+      await vineyard.newVineyards([12, 13, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
+      await vineyard.connect(accounts[2]).newVineyards([12, 13, 4]);
       await vineyard.buySprinkler(0, { value: spCost });
       await vineyard.buySprinkler(1, { value: spCost });
       await vineyard.buySprinkler(2, { value: spCost });
@@ -928,13 +942,170 @@ describe("Hash Valley tests", function () {
     });
   });
 
+  describe.only("Alchemy + Grapes", function () {
+    beforeEach(async () => {
+      await deploy();
+      await vineyard.newVineyards([12, 13, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
+      await vineyard.buySprinkler(0, { value: spCost });
+      await vineyard.buySprinkler(1, { value: spCost });
+
+      await vineyard.start();
+      await vineyard.plantMultiple([0, 1]);
+    });
+
+    it("harvest grapes, proportionally to bottle failure", async () => {
+      let time = 5 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      expect(await grape.balanceOf(accounts[0].address)).to.equal(0);
+      await vineyard.harvestGrapes(0);
+      expect(await grape.balanceOf(accounts[0].address)).to.equal(
+        utils.parseEther("2380")
+      );
+
+      time = 14 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+      await vineyard.harvestGrapes(0);
+      expect(await grape.balanceOf(accounts[0].address)).to.equal(
+        utils.parseEther("9047")
+      );
+      expect(await vineyard.harvest(0))
+        .to.emit(vineyard, "HarvestFailure")
+        .withArgs(0, 1);
+    });
+
+    it("harvest grapes, xp = higher yield", async () => {
+      let time = 15 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      await vineyard.harvest(0);
+      time = 5 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      expect(Number(await vineyard.maxGrapes(0))).to.be.greaterThan(10000);
+    });
+
+    it("vitality", async () => {
+      let time = 15 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      await vineyard.harvestGrapes(0);
+
+      time = 7 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      await vineyard.plantMultiple([0]);
+      await alchemy.vitality(0);
+
+      await vineyard.connect(accounts[1]).plantMultiple([1, 2]);
+      await alchemy.connect(accounts[1]).batchSpell([1, 2], 2);
+      expect(await alchemy.vitalized(0)).to.equal(2);
+      expect(await alchemy.vitalized(1)).to.equal(2);
+      expect(await alchemy.vitalized(2)).to.equal(2);
+
+      time = 79 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      expect(await vineyard.xp(0)).to.equal(0);
+      await vineyard.harvest(0);
+      expect(await vineyard.xp(0)).to.equal(200);
+    });
+
+    it("wither and vineyard dies", async () => {
+      let time = 19 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      await vineyard.harvest(0);
+
+      await bottle.setApprovalForAll(cellar.address, true);
+      await cellar.stake(0);
+      // fast forward 4 planting times
+      await ethers.provider.send("evm_increaseTime", [
+        (4 * 12 * 7 + 4) * 86400,
+      ]);
+      await ethers.provider.send("evm_mine", []);
+      await cellar.withdraw(0);
+
+      expect(
+        (await vinegar.balanceOf(accounts[0].address)).toString() == "0"
+      ).to.equal(false);
+
+      await vineyard.plantMultiple([0, 1]);
+
+      expect(await vineyard.vineyardAlive(1)).to.equal(true);
+      await alchemy.wither(0);
+      time = 0.5 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      expect(await vineyard.vineyardAlive(0)).to.equal(true);
+      time = 0.5 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+      expect(await vineyard.vineyardAlive(0)).to.equal(false);
+
+      await alchemy.batchSpell([1, 2], 0);
+      expect((await alchemy.withered(1))[1]).to.equal(6);
+      expect((await alchemy.withered(2))[1]).to.equal(6);
+    });
+
+    it("wither and block", async () => {
+      let time = 19 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      await vineyard.harvest(0);
+      await vineyard.connect(accounts[1]).harvestGrapes(1);
+
+      await bottle.setApprovalForAll(cellar.address, true);
+      await cellar.stake(0);
+      // fast forward 4 planting times
+      await ethers.provider.send("evm_increaseTime", [
+        (4 * 12 * 7 + 4) * 86400,
+      ]);
+      await ethers.provider.send("evm_mine", []);
+      await cellar.withdraw(0);
+
+      expect(
+        (await vinegar.balanceOf(accounts[0].address)).toString() == "0"
+      ).to.equal(false);
+
+      await vineyard.plantMultiple([0, 1]);
+
+      expect(await vineyard.vineyardAlive(1)).to.equal(true);
+      await alchemy.wither(1);
+      time = 0.5 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      expect(await vineyard.vineyardAlive(1)).to.equal(true);
+
+      await alchemy.connect(accounts[1]).defend(1);
+
+      time = 0.5 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+      expect(await vineyard.vineyardAlive(1)).to.equal(true);
+    });
+  });
+
   describe.skip("CouncilV2", function () {
     beforeEach(async () => {
       await deploy();
-      await vineyard.newVineyards([12, 13, 0, 4]);
-      await vineyard.newVineyards([12, 13, 0, 4]);
-      await vineyard.connect(accounts[1]).newVineyards([12, 13, 0, 4]);
-      await vineyard.connect(accounts[2]).newVineyards([12, 13, 0, 4]);
+      await vineyard.newVineyards([12, 13, 4]);
+      await vineyard.newVineyards([12, 13, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
+      await vineyard.connect(accounts[2]).newVineyards([12, 13, 4]);
       await vineyard.buySprinkler(0, { value: spCost });
       await vineyard.buySprinkler(1, { value: spCost });
       await vineyard.buySprinkler(2, { value: spCost });

@@ -6,12 +6,16 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 contract Badge is ERC721 {
     uint8 private airdropped = 0;
     uint256 public currentTokenId;
+    string private baseUri;
 
-    constructor(string memory _baseURI)
-        public
-        ERC721Full("Hash Valley Early Supporter", "TY")
+    constructor(string memory initBaseURI)
+        ERC721("Hash Valley Early Supporter", "TY")
     {
-        setBaseURI(_baseURI);
+        baseUri = initBaseURI;
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return baseUri;
     }
 
     /// @notice can be called once to compensate minters of original release
@@ -19,7 +23,7 @@ contract Badge is ERC721 {
         require(airdropped == 0, "!");
         airdropped = 1;
         for (uint256 i = 0; i < recipients.length; i++) {
-            _safeMint(recipient, currentTokenId);
+            _safeMint(recipients[i], currentTokenId);
             currentTokenId++;
         }
     }

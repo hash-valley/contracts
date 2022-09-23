@@ -84,7 +84,7 @@ contract Cellar {
         if (stakedDays < 360) {
             chance = 100 * (5 + ((365 - stakedDays) / 38)**2);
         } else {
-            chance = 500;
+            chance = 5_00;
         }
     }
 
@@ -99,7 +99,7 @@ contract Cellar {
         // probability of spoiling
         uint256 rand = random(
             string(abi.encodePacked(block.timestamp, _tokenID))
-        ) % 10000; // TODO: better rand num?
+        ) % 100_00; // TODO: better rand num?
         uint256 stakedDays = (withdrawn[_tokenID] - staked[_tokenID]) /
             (1 days);
 

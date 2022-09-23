@@ -87,6 +87,18 @@ async function deploy() {
   await give.deployed();
   console.log("GiveawayToken deployed to:", give.address);
 
+  const Alchemy = await hre.ethers.getContractFactory("Alchemy");
+  const alchemy = await Alchemy.deploy(storage.address);
+  await alchemy.deployed();
+
+  const Grape = await hre.ethers.getContractFactory("Grape");
+  const grape = await Grape.deploy(storage.address);
+  await grape.deployed();
+
+  const SpellParams = await hre.ethers.getContractFactory("SpellParams");
+  const spellParams = await SpellParams.deploy(storage.address);
+  await spellParams.deployed();
+
   const Multi = await hre.ethers.getContractFactory("Multicall");
   const multi = await Multi.deploy();
   await multi.deployed();
@@ -105,6 +117,9 @@ async function deploy() {
     bottle.address,
     give.address,
     royalty.address,
+    alchemy.address,
+    grape.address,
+    spellParams.address,
     wineUri.address,
     vineUri.address
   );
@@ -114,7 +129,7 @@ async function deploy() {
   await bottle.initR();
   console.log("royalties initialized");
 
-  await saleParams.airdrop(config.airdrop_recipients, config.airdrop_values);
+  await give.airdrop(config.airdrop_recipients, config.airdrop_values);
   console.log("vineyard airdrop complete");
 
   const TY = await hre.ethers.getContractFactory("Badge");
@@ -137,6 +152,9 @@ async function deploy() {
       vine_uri_address: vineUri.address,
       multi_address: multi.address,
       sale_params_address: saleParams.address,
+      alchemy_address: alchemy.address,
+      grape_address: grape.address,
+      spell_params_address: spellParams.address,
     },
     null,
     2

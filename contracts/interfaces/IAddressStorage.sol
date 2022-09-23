@@ -14,6 +14,12 @@ interface IAddressStorage {
 
     function royaltyManager() external view returns (address);
 
+    function alchemy() external view returns (address);
+
+    function grape() external view returns (address);
+
+    function spellParams() external view returns (address);
+
     function wineUri() external view returns (address);
 
     function vineUri() external view returns (address);

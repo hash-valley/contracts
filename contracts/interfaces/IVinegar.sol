@@ -13,4 +13,6 @@ interface IVinegar {
     ) external returns (bool);
 
     function rejuvenationCost(address account, uint256 cellarAge) external;
+
+    function witherCost(uint amount) external;
 }

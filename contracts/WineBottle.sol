@@ -29,7 +29,7 @@ interface IVineyard {
     function getTokenAttributes(uint256 _tokenId)
         external
         view
-        returns (uint16[] memory attributes);
+        returns (int256[] memory attributes);
 
     function getClimate(uint256 _tokenId) external view returns (uint8);
 }
@@ -221,7 +221,7 @@ contract WineBottle is ERC721, ERC2981 {
         uint256 tokenID = totalSupply;
         bottleMinted[tokenID] = block.timestamp;
 
-        uint16[] memory vinParams = IVineyard(vineyard).getTokenAttributes(
+        int256[] memory vinParams = IVineyard(vineyard).getTokenAttributes(
             _vineyard
         );
 
@@ -229,13 +229,13 @@ contract WineBottle is ERC721, ERC2981 {
             block.timestamp,
             tokenID,
             wineClasses,
-            vinParams[1]
+            uint256(vinParams[1])
         );
         uint256 bottleSubtype = Randomness.weightedRandomSelection(
             block.timestamp + 1,
             tokenID,
             wineSubtypes[bottleClass],
-            vinParams[3]
+            uint256(vinParams[2])
         );
         uint256 bottleNote = Randomness.weightedRandomSelection(
             block.timestamp + 2,

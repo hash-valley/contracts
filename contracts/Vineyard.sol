@@ -18,6 +18,8 @@ import "./interfaces/IRoyaltyManager.sol";
 import "./interfaces/IVotableUri.sol";
 import "./interfaces/IAddressStorage.sol";
 import "./libraries/UriUtils.sol";
+import "./interfaces/IAlchemy.sol";
+import "./interfaces/IGrape.sol";
 
 interface IGiveawayToken {
     function burnOne() external;
@@ -40,40 +42,41 @@ contract Vineyard is ERC721, ERC2981 {
     mapping(address => uint8) private freeMints;
 
     /// @dev attributes are
-    /// location, elevation, isNegative, soil
-    mapping(uint256 => uint16[]) private tokenAttributes;
+    /// location, elevation, soil
+    mapping(uint256 => int256[]) private tokenAttributes;
     mapping(uint256 => uint256) public planted;
     mapping(uint256 => uint256) public watered;
     mapping(uint256 => uint256) public xp;
     mapping(uint256 => uint16) public streak;
     mapping(uint256 => uint256) public lastHarvested;
     mapping(uint256 => uint256) public sprinkler;
+    mapping(uint256 => uint256) public grapesHarvested;
 
     string public baseUri;
     uint16 public immutable sellerFee = 750;
 
-    uint16[3][15] private mintReqs;
-    uint8[15] public climates;
+    int256[2][18] private mintReqs;
+    uint8[18] public climates;
 
     // EVENTS
     event VineyardMinted(
         uint256 tokenId,
-        uint256 location,
-        uint256 elevation,
-        uint256 elevationNegative,
-        uint256 soilType
+        int256 location,
+        int256 elevation,
+        int256 soilType
     );
     event SprinklerPurchased(uint256 tokenId);
     event Start(uint48 timestamp);
     event Planted(uint256 tokenId, uint256 season);
     event Harvested(uint256 tokenId, uint256 season, uint256 bottleId);
+    event HarvestFailure(uint256 tokenId, uint256 season);
 
     // CONSTRUCTOR
     constructor(
         string memory _baseUri,
         address _addressStorage,
-        uint16[3][15] memory _mintReqs,
-        uint8[15] memory _climates
+        int256[2][18] memory _mintReqs,
+        uint8[18] memory _climates
     ) ERC721("Hash Valley Vineyard", "VNYD") {
         deployer = _msgSender();
         setBaseURI(_baseUri);
@@ -108,34 +111,39 @@ contract Vineyard is ERC721, ERC2981 {
         saleParams = _address;
     }
 
+    int256 private unlockedLocales = 15;
+
+    /// @notice to manage sales params
+    function unlockLocale() public {
+        require(_msgSender() == deployer, "!deployer");
+        unlockedLocales++;
+    }
+
     /// @notice validates minting attributes
-    function validateAttributes(uint16[] calldata _tokenAttributes)
-        public
-        view
-        returns (bool)
-    {
-        require(_tokenAttributes.length == 4, "wrong #params");
-        require(_tokenAttributes[0] <= 14, "inv 1st param");
-        uint256 lower = mintReqs[_tokenAttributes[0]][0];
-        uint256 upper = mintReqs[_tokenAttributes[0]][1];
+    function validateAttributes(
+        int256[] calldata _tokenAttributes,
+        bool giveaway
+    ) public view returns (bool) {
+        require(_tokenAttributes.length == 3, "wrong #params");
+        if (giveaway) {
+            require(_tokenAttributes[0] <= unlockedLocales, "inv 1st param");
+        } else {
+            require(_tokenAttributes[0] <= 14, "inv 1st param");
+        }
+        int256 lower = mintReqs[uint256(_tokenAttributes[0])][0];
+        int256 upper = mintReqs[uint256(_tokenAttributes[0])][1];
         require(
             _tokenAttributes[1] >= lower && _tokenAttributes[1] <= upper,
             "inv 2nd param"
         );
-        require(
-            _tokenAttributes[2] == 0 || _tokenAttributes[2] == 1,
-            "inv 3rd param"
-        );
-        if (_tokenAttributes[2] == 1)
-            require(mintReqs[_tokenAttributes[0]][2] == 1, "3rd cant be 1");
-        require(_tokenAttributes[3] <= 5, "inv 4th param");
+        require(_tokenAttributes[2] <= 5, "inv 3rd param");
         return true;
     }
 
     // SALE
     /// @notice mints a new vineyard
-    /// @param _tokenAttributes array of attribute ints [location, elevation, elevationIsNegative (0 or 1), soilType]
-    function newVineyards(uint16[] calldata _tokenAttributes) public payable {
+    /// @param _tokenAttributes array of attribute ints [location, elevation, soilType]
+    function newVineyards(int256[] calldata _tokenAttributes) public payable {
         uint256 price = ISaleParams(saleParams).getSalesPrice(totalSupply);
         require(msg.value >= price, "Value below price");
         if (price == 0) {
@@ -146,13 +154,13 @@ contract Vineyard is ERC721, ERC2981 {
     }
 
     /// @notice mints a new vineyard for free by burning a giveaway token
-    function newVineyardGiveaway(uint16[] calldata _tokenAttributes) public {
+    function newVineyardGiveaway(int256[] calldata _tokenAttributes) public {
         IGiveawayToken(addressStorage.giveawayToken()).burnOne();
         _mintVineyard(_tokenAttributes, true);
     }
 
     /// @notice private vineyard minting function
-    function _mintVineyard(uint16[] calldata _tokenAttributes, bool giveaway)
+    function _mintVineyard(int256[] calldata _tokenAttributes, bool giveaway)
         private
     {
         uint256 tokenId = totalSupply;
@@ -160,7 +168,7 @@ contract Vineyard is ERC721, ERC2981 {
             require(tokenId < maxVineyards, "Max vineyards minted");
         }
 
-        validateAttributes(_tokenAttributes);
+        validateAttributes(_tokenAttributes, giveaway);
 
         _safeMint(_msgSender(), tokenId);
         tokenAttributes[tokenId] = _tokenAttributes;
@@ -170,8 +178,7 @@ contract Vineyard is ERC721, ERC2981 {
             tokenId,
             _tokenAttributes[0],
             _tokenAttributes[1],
-            _tokenAttributes[2],
-            _tokenAttributes[3]
+            _tokenAttributes[2]
         );
     }
 
@@ -191,14 +198,14 @@ contract Vineyard is ERC721, ERC2981 {
     function getTokenAttributes(uint256 _tokenId)
         public
         view
-        returns (uint16[] memory attributes)
+        returns (int256[] memory attributes)
     {
         attributes = tokenAttributes[_tokenId];
     }
 
     /// @notice returns token climate
     function getClimate(uint256 _tokenId) public view returns (uint8) {
-        return climates[tokenAttributes[_tokenId][0]];
+        return climates[uint256(tokenAttributes[_tokenId][0])];
     }
 
     // LOGISTICS
@@ -232,6 +239,7 @@ contract Vineyard is ERC721, ERC2981 {
         require(planted[_tokenId] != season, "Vineyard already planted");
         planted[_tokenId] = season;
         watered[_tokenId] = block.timestamp;
+        delete grapesHarvested[_tokenId];
         emit Planted(_tokenId, planted[_tokenId]);
     }
 
@@ -249,16 +257,32 @@ contract Vineyard is ERC721, ERC2981 {
         uint256 season = currSeason();
         require(planted[_tokenId] == season, "Vineyard already harvested");
         require(vineyardAlive(_tokenId), "Vineyard not alive");
-        planted[_tokenId] = 0;
+        delete planted[_tokenId];
 
+        // check for harvest failure (too many grapes harvested)
+        if (
+            random(string(abi.encodePacked(block.timestamp, _tokenId))) %
+                100_00 <
+            harvestFailureChance(grapesHarvested[_tokenId], maxGrapes(_tokenId))
+        ) {
+            emit HarvestFailure(_tokenId, season);
+            return;
+        }
+
+        // xp
         if (lastHarvested[_tokenId] == season - 1) {
             streak[_tokenId] += 1;
         } else {
             streak[_tokenId] = 1;
         }
         lastHarvested[_tokenId] = season;
-        xp[_tokenId] += 100 * streak[_tokenId];
+        if (IAlchemy(addressStorage.alchemy()).vitalized(_tokenId) == season) {
+            xp[_tokenId] += 200 * streak[_tokenId]; // TODO: numbers
+        } else {
+            xp[_tokenId] += 100 * streak[_tokenId];
+        }
 
+        // mint bottle
         address wineBottle = addressStorage.bottle();
         uint256 bottleId = IWineBottle(wineBottle).newBottle(
             _tokenId,
@@ -297,14 +321,22 @@ contract Vineyard is ERC721, ERC2981 {
     }
 
     /// @notice window of time to water in
-    function waterWindow(uint256 _tokenId) public pure returns (uint256) {
-        if (_tokenId == 4 || _tokenId == 9 || _tokenId == 11) return 48 hours;
+    function waterWindow(uint256 _tokenId) public view returns (uint256) {
+        int256 location = tokenAttributes[_tokenId][0];
+        if (location == 4 || location == 9 || location == 11) return 48 hours;
         return 24 hours;
     }
 
     /// @notice checks if vineyard is alive (planted and watered)
     function vineyardAlive(uint256 _tokenId) public view returns (bool) {
-        if (planted[_tokenId] == currSeason()) {
+        uint256 _currSeason = currSeason();
+        (uint256 deadline, uint256 season) = IAlchemy(addressStorage.alchemy())
+            .withered(_tokenId);
+        if (season == _currSeason && deadline < block.timestamp) {
+            return false;
+        }
+
+        if (planted[_tokenId] == _currSeason) {
             if (
                 block.timestamp <=
                 watered[_tokenId] +
@@ -318,7 +350,54 @@ contract Vineyard is ERC721, ERC2981 {
         return false;
     }
 
+    /// @notice harvest grapes
+    function harvestGrapes(uint256 _tokenId) public {
+        uint256 _currSeason = currSeason();
+        require(ownerOf(_tokenId) == _msgSender(), "!owned");
+        require(planted[_tokenId] == _currSeason, "!planted");
+        require(_currSeason > 0, "!started");
+
+        uint256 seasonStart;
+        if (_currSeason == 1) {
+            seasonStart = gameStart;
+        } else {
+            seasonStart =
+                gameStart +
+                firstSeasonLength +
+                (_currSeason - 2) *
+                seasonLength;
+        }
+        uint256 timePassed = block.timestamp - seasonStart;
+        uint256 harvestable = (100_000 * (maxGrapes(_tokenId) * timePassed)) /
+            (_currSeason == 1 ? firstSeasonLength : seasonLength) /
+            100_000 -
+            grapesHarvested[_tokenId];
+
+        grapesHarvested[_tokenId] += harvestable;
+        IGrape(addressStorage.grape()).mint(harvestable);
+    }
+
     // VIEWS
+    /// @notice calculates chance that harvest fails
+    function harvestFailureChance(uint256 _grapesHarvested, uint256 _maxGrapes)
+        public
+        pure
+        returns (uint256)
+    {
+        uint256 thresh = (90_00 * _maxGrapes) / 100_00;
+        if (_grapesHarvested >= thresh) {
+            return 100_00; // 100% chance of failure
+        } else {
+            return (100_00 * _grapesHarvested) / _maxGrapes;
+        }
+    }
+
+    /// @notice max grapes a vineyard can yield
+    function maxGrapes(uint256 _tokenId) public view returns (uint256) {
+        uint256 baseRate = 10_000;
+        return xp[_tokenId] + baseRate; // TODO: numbers
+    }
+
     /// @notice current harvest streak for vineyard
     function currentStreak(uint256 _tokenId) public view returns (uint16) {
         uint256 season = currSeason();
@@ -385,7 +464,13 @@ contract Vineyard is ERC721, ERC2981 {
             vineyardAlive(_tokenId);
     }
 
+    /// @notice creates a random number
+    function random(string memory input) internal pure returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(input)));
+    }
+
     // URI
+    /// @notice set a new base uri (backup measure)
     function setBaseURI(string memory _baseUri) public {
         require(_msgSender() == deployer, "!deployer");
         baseUri = _baseUri;
@@ -403,7 +488,7 @@ contract Vineyard is ERC721, ERC2981 {
             "ERC721Metadata: URI query for nonexistent token"
         );
 
-        uint16[] memory attr = tokenAttributes[_tokenId];
+        int256[] memory attr = tokenAttributes[_tokenId];
 
         string memory json = string.concat(
             string.concat(
@@ -416,19 +501,19 @@ contract Vineyard is ERC721, ERC2981 {
                 '", "image": "',
                 IVotableUri(addressStorage.vineUri()).image(),
                 "/",
-                UriUtils.uint2str(attr[0]),
+                UriUtils.uint2str(uint256(attr[0])),
                 '.png", "description": "Plant, tend and harvest this vineyard to grow your wine collection.", "animation_url": "'
             ),
             string.concat(
                 IVotableUri(addressStorage.vineUri()).uri(),
                 "?seed=",
-                UriUtils.uint2str(attr[0]),
+                UriUtils.uint2str(uint256(attr[0])),
                 "-",
-                UriUtils.uint2str(attr[1]),
+                UriUtils.uint2str(uint256(attr[1] < 0 ? -attr[1] : attr[1])),
                 "-",
-                UriUtils.uint2str(attr[2]),
+                attr[1] < 0 ? "1" : "0",
                 "-",
-                UriUtils.uint2str(attr[3]),
+                UriUtils.uint2str(uint256(attr[2])),
                 "-",
                 UriUtils.uint2str(xp[_tokenId]),
                 '", ',
@@ -443,17 +528,20 @@ contract Vineyard is ERC721, ERC2981 {
                 '", "attributes": [',
                 string.concat(
                     '{"trait_type": "Location", "value": "',
-                    locationNames[attr[0]],
+                    locationNames[uint256(attr[0])],
                     '"},'
                 ),
                 string.concat(
                     '{"trait_type": "Elevation", "value": "',
-                    UriUtils.uint2str(attr[1]),
+                    attr[1] < 0 ? "-" : "",
+                    UriUtils.uint2str(
+                        uint256(attr[1] < 0 ? -attr[1] : attr[1])
+                    ),
                     '"},'
                 ),
                 string.concat(
                     '{"trait_type": "Soil Type", "value": "',
-                    soilNames[attr[3]],
+                    soilNames[uint256(attr[2])],
                     '"},'
                 ),
                 string.concat(
@@ -486,7 +574,7 @@ contract Vineyard is ERC721, ERC2981 {
         return output;
     }
 
-    string[15] locationNames = [
+    string[18] private locationNames = [
         "Amsterdam",
         "Tokyo",
         "Napa Valley",
@@ -501,10 +589,20 @@ contract Vineyard is ERC721, ERC2981 {
         "Borneo",
         "Fujian Province",
         "Long Island",
-        "Champagne"
+        "Champagne",
+        "Atlantis",
+        "Orbital Ring",
+        "Hypercubic Tesselation Plane"
     ];
 
-    string[6] soilNames = ["Rocky", "Sandy", "Clay", "Boggy", "Peaty", "Mulch"];
+    string[6] private soilNames = [
+        "Rocky",
+        "Sandy",
+        "Clay",
+        "Boggy",
+        "Peaty",
+        "Mulch"
+    ];
 
     //ERC2981 stuff
     function setDefaultRoyalty(address _receiver, uint96 _feeNumerator) public {

@@ -11,6 +11,9 @@ contract AddressStorage is IAddressStorage, Ownable {
     address public override bottle;
     address public override giveawayToken;
     address public override royaltyManager;
+    address public override alchemy;
+    address public override grape;
+    address public override spellParams;
 
     address public override wineUri;
     address public override vineUri;
@@ -32,6 +35,9 @@ contract AddressStorage is IAddressStorage, Ownable {
         address _bottle,
         address _giveawayToken,
         address _royaltyManager,
+        address _alchemy,
+        address _grape,
+        address _spellParams,
         address _wineUri,
         address _vineUri
     ) public {
@@ -43,6 +49,9 @@ contract AddressStorage is IAddressStorage, Ownable {
         bottle = _bottle;
         giveawayToken = _giveawayToken;
         royaltyManager = _royaltyManager;
+        alchemy = _alchemy;
+        grape = _grape;
+        spellParams = _spellParams;
         wineUri = _wineUri;
         vineUri = _vineUri;
         addressesSet = true;
@@ -61,6 +70,11 @@ contract AddressStorage is IAddressStorage, Ownable {
 
     function newWineUri(address _newWineUri) external onlyOwner {
         wineUri = _newWineUri;
+        emit AddressesSet();
+    }
+
+    function newSpellParams(address _newParams) external onlyOwner {
+        spellParams = _newParams;
         emit AddressesSet();
     }
 }

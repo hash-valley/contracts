@@ -22,7 +22,7 @@ task("accounts", "Prints the list of accounts", async () => {
  */
 module.exports = {
   solidity: {
-    version: "0.8.13",
+    version: "0.8.17",
     settings: {
       optimizer: {
         enabled: true,
@@ -62,6 +62,7 @@ module.exports = {
     currency: "USD",
     gasPrice: 15,
     coinmarketcap: config.coinmarketcap,
+    enabled: false,
   },
   etherscan: {
     apiKey: config.etherscan,
