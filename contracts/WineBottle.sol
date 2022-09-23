@@ -45,9 +45,9 @@ contract WineBottle is ERC721, ERC2981 {
     string public baseUri;
     uint16 public immutable sellerFee = 750;
 
-    uint256 internal wineClasses = 4;
-    uint8[4] internal wineSubtypes = [3, 2, 2, 3];
-    uint8[4][] internal wineNotes;
+    uint256 internal wineClasses = 5;
+    uint8[5] internal wineSubtypes = [3, 2, 2, 3, 3];
+    uint8[5][] internal wineNotes;
     uint8[][][] internal wineTypes;
 
     uint256 internal constant maxAge = 13000000000 * 365 days;
@@ -69,31 +69,41 @@ contract WineBottle is ERC721, ERC2981 {
         _setDefaultRoyalty(_msgSender(), 750);
         eraBounds = _eraBounds;
 
+        // notes
         wineNotes.push([4, 4, 1]);
         wineNotes.push([5, 2]);
         wineNotes.push([2, 1]);
         wineNotes.push([4, 3, 2]);
+        wineNotes.push([2, 2, 2]);
 
+        // types
         wineTypes.push(new uint8[][](3));
         wineTypes.push(new uint8[][](2));
         wineTypes.push(new uint8[][](2));
         wineTypes.push(new uint8[][](3));
+        wineTypes.push(new uint8[][](3));
 
+        // red
+        // fruity dry
         wineTypes[0].push(new uint8[](4));
         wineTypes[0][0].push(6);
         wineTypes[0][0].push(8);
         wineTypes[0][0].push(7);
         wineTypes[0][0].push(5);
 
+        // herbal dry
         wineTypes[0].push(new uint8[](4));
         wineTypes[0][1].push(6);
         wineTypes[0][1].push(5);
         wineTypes[0][1].push(7);
         wineTypes[0][1].push(13);
 
+        // sweet
         wineTypes[0].push(new uint8[](1));
         wineTypes[0][2].push(3);
 
+        //white
+        // dry
         wineTypes[1].push(new uint8[](5));
         wineTypes[1][0].push(7);
         wineTypes[1][0].push(8);
@@ -101,31 +111,54 @@ contract WineBottle is ERC721, ERC2981 {
         wineTypes[1][0].push(8);
         wineTypes[1][0].push(9);
 
+        // sweet
         wineTypes[1].push(new uint8[](2));
         wineTypes[1][1].push(6);
         wineTypes[1][1].push(6);
 
+        // rose
+        // dry
         wineTypes[2].push(new uint8[](2));
         wineTypes[2][0].push(5);
         wineTypes[2][0].push(6);
 
+        // off dry
         wineTypes[2].push(new uint8[](1));
         wineTypes[2][1].push(6);
 
+        //sparkling
+        //white
         wineTypes[3].push(new uint8[](4));
         wineTypes[3][0].push(4);
         wineTypes[3][0].push(7);
         wineTypes[3][0].push(5);
         wineTypes[3][0].push(5);
 
+        //red
         wineTypes[3].push(new uint8[](3));
         wineTypes[3][1].push(3);
         wineTypes[3][1].push(2);
         wineTypes[3][1].push(2);
 
+        // Rose
         wineTypes[3].push(new uint8[](2));
         wineTypes[3][2].push(3);
         wineTypes[3][2].push(3);
+
+        // aquatic
+        wineTypes[4].push(new uint8[](2));
+        wineTypes[4][0].push(3);
+        wineTypes[4][0].push(5);
+
+        //nebulic
+        wineTypes[4].push(new uint8[](2));
+        wineTypes[4][1].push(6);
+        wineTypes[4][1].push(2);
+
+        // hypercubic
+        wineTypes[4].push(new uint8[](2));
+        wineTypes[4][2].push(3);
+        wineTypes[4][2].push(2);
     }
 
     // called once to init royalties
@@ -225,18 +258,22 @@ contract WineBottle is ERC721, ERC2981 {
             _vineyard
         );
 
-        uint256 bottleClass = Randomness.weightedRandomSelection(
-            block.timestamp,
-            tokenID,
-            wineClasses,
-            uint256(vinParams[1])
-        );
-        uint256 bottleSubtype = Randomness.weightedRandomSelection(
-            block.timestamp + 1,
-            tokenID,
-            wineSubtypes[bottleClass],
-            uint256(vinParams[2])
-        );
+        uint256 bottleClass = _vineyard > 14
+            ? 4
+            : Randomness.weightedRandomSelection(
+                block.timestamp,
+                tokenID,
+                wineClasses - 1,
+                uint256(vinParams[1])
+            );
+        uint256 bottleSubtype = _vineyard > 14
+            ? _vineyard - 15
+            : Randomness.weightedRandomSelection(
+                block.timestamp + 1,
+                tokenID,
+                wineSubtypes[bottleClass],
+                uint256(vinParams[2])
+            );
         uint256 bottleNote = Randomness.weightedRandomSelection(
             block.timestamp + 2,
             tokenID,
@@ -376,9 +413,9 @@ contract WineBottle is ERC721, ERC2981 {
         return output;
     }
 
-    string[4] typeNames = ["Red", "White", "Rose", "Sparkling"];
+    string[5] typeNames = ["Red", "White", "Rose", "Sparkling", "Exotic"];
 
-    string[10] subTypeNames = [
+    string[13] subTypeNames = [
         "Fruity Dry Red",
         "Herbal Dry Red",
         "Sweet Red",
@@ -388,7 +425,10 @@ contract WineBottle is ERC721, ERC2981 {
         "Off Dry Rose",
         "White",
         "Red",
-        "Rose"
+        "Rose",
+        "Aquatic",
+        "Nebulic",
+        "Hypercubic"
     ];
 
     function getSubtype(uint256 _type, uint256 _subtype)
@@ -401,7 +441,7 @@ contract WineBottle is ERC721, ERC2981 {
         return subTypeNames[offset + _subtype];
     }
 
-    string[28] noteNames = [
+    string[34] noteNames = [
         "Blueberry Blackberry",
         "Black Cherry Rasberry",
         "Strawberry Cherry",
@@ -429,7 +469,13 @@ contract WineBottle is ERC721, ERC2981 {
         "Sweet Blueberry Cherry",
         "Off Dry Raspberry Cherry",
         "Dry Strawberry Floral",
-        "Off Dry Strawberry Orange"
+        "Off Dry Strawberry Orange",
+        "Kelp",
+        "Sponge",
+        "Star Dust",
+        "Zero Point",
+        "Tesselated Manifold",
+        "Holomorphic"
     ];
 
     function getNote(
@@ -450,7 +496,7 @@ contract WineBottle is ERC721, ERC2981 {
         return "";
     }
 
-    string[162] nameNames = [
+    string[184] nameNames = [
         "Shiraz",
         "Monastrell",
         "Mencia",
@@ -612,7 +658,28 @@ contract WineBottle is ERC721, ERC2981 {
         "Cava Rose Brut",
         "Moscato Rose",
         "Brachetto d'Acqui Rose",
-        "Cava Rose"
+        "Cava Rose",
+        "Laminaria",
+        "Feather Boa",
+        "Kombu Kelp",
+        "Azure Vase",
+        "Vulcano Carpet",
+        "Convoluted Sponge",
+        "Chimney Sponge",
+        "Chicken Liver",
+        "Red Star",
+        "Orange Nebula",
+        "Yellow Dust",
+        "Green Atmos",
+        "Blue System",
+        "Purple Quasar",
+        "000",
+        "111",
+        "Symplectic Manifold",
+        "Combinatorial",
+        "Digital Manifold",
+        "Convex Function",
+        "Concave Function"
     ];
 
     function getName(
