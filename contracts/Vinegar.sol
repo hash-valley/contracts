@@ -14,6 +14,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IAddressStorage.sol";
+import "./interfaces/ISpellParams.sol";
 
 contract Vinegar is ERC20 {
     IAddressStorage public addressStorage;
@@ -41,7 +42,10 @@ contract Vinegar is ERC20 {
     /// @notice burns the specified amount of tokens
     function rejuvenationCost(address account, uint256 cellarAge) external {
         require(_msgSender() == addressStorage.bottle(), "Not Bottle");
-        _burn(account, 3 * ageToVinegar(cellarAge));
+        uint256 cost = ISpellParams(addressStorage.spellParams()).rejuveCost(
+            ageToVinegar(cellarAge)
+        );
+        _burn(account, cost);
     }
 
     /// @notice burns tokens for withering

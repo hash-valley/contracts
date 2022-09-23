@@ -7,4 +7,6 @@ interface ISpellParams {
     function defendCost(uint256 target) external returns (uint256);
 
     function vitalityCost(uint256 target) external returns (uint256);
+
+    function rejuveCost(uint target) external returns (uint256);
 }

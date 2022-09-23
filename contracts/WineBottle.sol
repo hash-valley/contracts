@@ -145,6 +145,7 @@ contract WineBottle is ERC721, ERC2981 {
         wineTypes[3][2].push(3);
         wineTypes[3][2].push(3);
 
+        // exotic
         // aquatic
         wineTypes[4].push(new uint8[](2));
         wineTypes[4][0].push(3);
@@ -258,7 +259,7 @@ contract WineBottle is ERC721, ERC2981 {
             _vineyard
         );
 
-        uint256 bottleClass = _vineyard > 14
+        uint256 bottleClass = vinParams[0] > 14
             ? 4
             : Randomness.weightedRandomSelection(
                 block.timestamp,
@@ -266,8 +267,8 @@ contract WineBottle is ERC721, ERC2981 {
                 wineClasses - 1,
                 uint256(vinParams[1])
             );
-        uint256 bottleSubtype = _vineyard > 14
-            ? _vineyard - 15
+        uint256 bottleSubtype = vinParams[0] > 14
+            ? uint256(vinParams[0] - 15)
             : Randomness.weightedRandomSelection(
                 block.timestamp + 1,
                 tokenID,
@@ -278,13 +279,13 @@ contract WineBottle is ERC721, ERC2981 {
             block.timestamp + 2,
             tokenID,
             wineNotes[bottleClass][bottleSubtype],
-            IVineyard(vineyard).getClimate(_vineyard)
+            vinParams[0] > 14 ? 1 : IVineyard(vineyard).getClimate(_vineyard)
         );
         uint256 bottleType = Randomness.weightedRandomSelection(
             block.timestamp + 3,
             tokenID,
             wineTypes[bottleClass][bottleSubtype][bottleNote],
-            0
+            1
         );
 
         // adjust for champagne

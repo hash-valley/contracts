@@ -942,7 +942,7 @@ describe("Hash Valley tests", function () {
     });
   });
 
-  describe.only("Alchemy + Grapes", function () {
+  describe("Alchemy + Grapes", function () {
     beforeEach(async () => {
       await deploy();
       await vineyard.newVineyards([12, 13, 4]);
@@ -1096,6 +1096,56 @@ describe("Hash Valley tests", function () {
       await ethers.provider.send("evm_increaseTime", [time]);
       await ethers.provider.send("evm_mine", []);
       expect(await vineyard.vineyardAlive(1)).to.equal(true);
+    });
+  });
+
+  describe("Special Locs", function () {
+    beforeEach(async () => {
+      await deploy();
+
+      await vineyard.unlockLocale();
+      await vineyard.unlockLocale();
+
+      await vineyard.newVineyardGiveaway([15, -800, 4]);
+      await vineyard.newVineyardGiveaway([16, 8448000, 4]);
+      await vineyard.newVineyardGiveaway([17, 0, 4]);
+
+      await vineyard.buySprinkler(0, { value: spCost });
+      await vineyard.buySprinkler(1, { value: spCost });
+      await vineyard.buySprinkler(2, { value: spCost });
+
+      await vineyard.start();
+      await vineyard.plantMultiple([0, 1, 2]);
+    });
+
+    it("Harvest special bottles", async () => {
+      let uri;
+      // uri = await vineyard.tokenURI(0);
+      // console.log(Buffer.from(uri.slice(29), "base64").toString("ascii"));
+      // uri = await vineyard.tokenURI(1);
+      // console.log(Buffer.from(uri.slice(29), "base64").toString("ascii"));
+      // uri = await vineyard.tokenURI(2);
+      // console.log(Buffer.from(uri.slice(29), "base64").toString("ascii"));
+
+      let time = 16 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      await vineyard.harvestMultiple([0, 1, 2]);
+      expect(await bottle.attributes(0, 0)).to.equal(4);
+      expect(await bottle.attributes(1, 0)).to.equal(4);
+      expect(await bottle.attributes(2, 0)).to.equal(4);
+
+      expect(await bottle.attributes(0, 1)).to.equal(0);
+      expect(await bottle.attributes(1, 1)).to.equal(1);
+      expect(await bottle.attributes(2, 1)).to.equal(2);
+
+      // uri = await bottle.tokenURI(0);
+      // console.log(Buffer.from(uri.slice(29), "base64").toString("ascii"));
+      // uri = await bottle.tokenURI(1);
+      // console.log(Buffer.from(uri.slice(29), "base64").toString("ascii"));
+      // uri = await bottle.tokenURI(2);
+      // console.log(Buffer.from(uri.slice(29), "base64").toString("ascii"));
     });
   });
 

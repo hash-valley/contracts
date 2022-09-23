@@ -22,4 +22,12 @@ contract SpellParams is ISpellParams {
     function vitalityCost(uint256 target) public override returns (uint256) {
         return 0;
     }
+
+    function rejuveCost(uint256 ageInVinegar)
+        public
+        override
+        returns (uint256)
+    {
+        return 3 * ageInVinegar;
+    }
 }
