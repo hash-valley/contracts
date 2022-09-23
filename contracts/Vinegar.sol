@@ -21,6 +21,7 @@ contract Vinegar is ERC20 {
 
     constructor(address _addressStorage) ERC20("Vinegar", "VNG") {
         addressStorage = IAddressStorage(_addressStorage);
+        _mint(_msgSender(), 10_000_000e18);
     }
 
     /// @notice mints tokens to recipient address of vote

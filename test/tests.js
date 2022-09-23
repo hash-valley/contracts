@@ -960,22 +960,22 @@ describe("Hash Valley tests", function () {
       await ethers.provider.send("evm_increaseTime", [time]);
       await ethers.provider.send("evm_mine", []);
 
-      expect(await grape.balanceOf(accounts[0].address)).to.equal(0);
-      await vineyard.harvestGrapes(0);
-      expect(await grape.balanceOf(accounts[0].address)).to.equal(
+      expect(await grape.balanceOf(accounts[1].address)).to.equal(0);
+      await vineyard.connect(accounts[1]).harvestGrapes(1);
+      expect(await grape.balanceOf(accounts[1].address)).to.equal(
         utils.parseEther("2380")
       );
 
       time = 14 * day;
       await ethers.provider.send("evm_increaseTime", [time]);
       await ethers.provider.send("evm_mine", []);
-      await vineyard.harvestGrapes(0);
-      expect(await grape.balanceOf(accounts[0].address)).to.equal(
+      await vineyard.connect(accounts[1]).harvestGrapes(1);
+      expect(await grape.balanceOf(accounts[1].address)).to.equal(
         utils.parseEther("9047")
       );
-      expect(await vineyard.harvest(0))
+      expect(await vineyard.connect(accounts[1]).harvest(1))
         .to.emit(vineyard, "HarvestFailure")
-        .withArgs(0, 1);
+        .withArgs(1, 1);
     });
 
     it("harvest grapes, xp = higher yield", async () => {
@@ -1004,6 +1004,8 @@ describe("Hash Valley tests", function () {
 
       await vineyard.plantMultiple([0]);
       await alchemy.vitality(0);
+
+      await grape.transfer(accounts[1].address, utils.parseEther("10000"));
 
       await vineyard.connect(accounts[1]).plantMultiple([1, 2]);
       await alchemy.connect(accounts[1]).batchSpell([1, 2], 2);

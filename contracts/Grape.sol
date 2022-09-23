@@ -10,6 +10,7 @@ contract Grape is IGrape, ERC20 {
 
     constructor(address _addressStorage) ERC20("Grape", "GRAPE") {
         addressStorage = IAddressStorage(_addressStorage);
+        _mint(_msgSender(), 1_000_000e18);
     }
 
     /// @notice mint grapes from eligible vineyard
@@ -21,6 +22,6 @@ contract Grape is IGrape, ERC20 {
     /// @notice burns grapes for alchemy
     function burn(uint256 amount) public override {
         require(_msgSender() == addressStorage.alchemy(), "invalid caller");
-        _burn(tx.origin, amount * 10**decimals());
+        _burn(tx.origin, amount);
     }
 }

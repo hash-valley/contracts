@@ -21,6 +21,8 @@ import "./libraries/UriUtils.sol";
 import "./interfaces/IAlchemy.sol";
 import "./interfaces/IGrape.sol";
 
+// import "hardhat/console.sol";
+
 interface IGiveawayToken {
     function burnOne() external;
 }
@@ -352,21 +354,12 @@ contract Vineyard is ERC721, ERC2981 {
 
     /// @notice harvest grapes
     function harvestGrapes(uint256 _tokenId) public {
-        uint256 _currSeason = currSeason();
+        (uint256 seasonStart, uint256 _currSeason) = startOfSeason();
+
         require(ownerOf(_tokenId) == _msgSender(), "!owned");
         require(planted[_tokenId] == _currSeason, "!planted");
         require(_currSeason > 0, "!started");
 
-        uint256 seasonStart;
-        if (_currSeason == 1) {
-            seasonStart = gameStart;
-        } else {
-            seasonStart =
-                gameStart +
-                firstSeasonLength +
-                (_currSeason - 2) *
-                seasonLength;
-        }
         uint256 timePassed = block.timestamp - seasonStart;
         uint256 harvestable = (100_000 * (maxGrapes(_tokenId) * timePassed)) /
             (_currSeason == 1 ? firstSeasonLength : seasonLength) /
@@ -416,18 +409,24 @@ contract Vineyard is ERC721, ERC2981 {
             _canWater + waterWindow(_tokenId) >= block.timestamp;
     }
 
+    /// @notice gets start time of current season
+    function startOfSeason() public view returns (uint256, uint256) {
+        uint256 season = currSeason();
+        if (season == 1) {
+            return (gameStart, season);
+        } else {
+            return (
+                gameStart + firstSeasonLength + (season - 2) * seasonLength,
+                season
+            );
+        }
+    }
+
     /// @notice checks if its planting season
     function plantingTime() public view returns (bool) {
         if (gameStart == 0) return false;
-        uint256 season = currSeason();
-        uint256 plantingBegins;
-        if (season == 1) plantingBegins = gameStart;
-        else
-            plantingBegins =
-                gameStart +
-                firstSeasonLength +
-                (currSeason() - 2) *
-                seasonLength;
+        (uint256 plantingBegins, ) = startOfSeason();
+
         uint256 plantingEnds = plantingBegins + 1 weeks;
         return
             plantingEnds >= block.timestamp &&
