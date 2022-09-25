@@ -14,5 +14,7 @@ interface IVinegar {
 
     function rejuvenationCost(address account, uint256 cellarAge) external;
 
-    function witherCost(uint amount) external;
+    function witherCost(uint256 amount) external;
+
+    function mintReward() external;
 }

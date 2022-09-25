@@ -63,7 +63,7 @@ contract Cellar {
 
     /// @notice stakes bottle in contract
     function stake(uint256 _tokenID) public {
-        require(staked[_tokenID] == 0, "Id already staked");
+        require(staked[_tokenID] == 0, "already staked");
         address wineBottle = addressStorage.bottle();
         staked[_tokenID] = block.timestamp;
         owner[_tokenID] = msg.sender;
@@ -90,8 +90,8 @@ contract Cellar {
 
     /// @notice unstakes bottle from contract
     function withdraw(uint256 _tokenID) public {
-        require(staked[_tokenID] != 0, "Id not staked");
-        require(owner[_tokenID] == msg.sender, "Id not owned");
+        require(staked[_tokenID] != 0, "!staked");
+        require(owner[_tokenID] == msg.sender, "!owned");
 
         address wineBottle = addressStorage.bottle();
         withdrawn[_tokenID] = block.timestamp;

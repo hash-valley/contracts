@@ -20,6 +20,7 @@ import "./interfaces/IAddressStorage.sol";
 import "./libraries/UriUtils.sol";
 import "./interfaces/IAlchemy.sol";
 import "./interfaces/IGrape.sol";
+import "./interfaces/IVinegar.sol";
 
 // import "hardhat/console.sol";
 
@@ -102,7 +103,7 @@ contract Vineyard is ERC721, ERC2981 {
     bool private inited;
 
     function initR() external {
-        require(!inited, "!init");
+        require(!inited, "inited");
         IRoyaltyManager(addressStorage.royaltyManager()).updateRoyalties(
             _msgSender()
         );
@@ -119,7 +120,7 @@ contract Vineyard is ERC721, ERC2981 {
         saleParams = _address;
     }
 
-    int256 private unlockedLocales = 15;
+    int256 private unlockedLocales = 14;
 
     /// @notice to manage sales params
     function unlockLocale() public {
@@ -134,9 +135,9 @@ contract Vineyard is ERC721, ERC2981 {
     ) public view returns (bool) {
         require(_tokenAttributes.length == 3, "wrong #params");
         if (giveaway) {
-            require(_tokenAttributes[0] <= unlockedLocales, "inv 1st param");
+            require(_tokenAttributes[0] <= unlockedLocales, "invalid 1st param");
         } else {
-            require(_tokenAttributes[0] <= 14, "inv 1st param");
+            require(_tokenAttributes[0] <= 14, "invalid 1st param");
         }
         int256 lower = mintReqs[uint256(_tokenAttributes[0])][0];
         int256 upper = mintReqs[uint256(_tokenAttributes[0])][1];
@@ -144,7 +145,7 @@ contract Vineyard is ERC721, ERC2981 {
             _tokenAttributes[1] >= lower && _tokenAttributes[1] <= upper,
             "inv 2nd param"
         );
-        require(_tokenAttributes[2] <= 5, "inv 3rd param");
+        require(_tokenAttributes[2] <= 5, "invalid 3rd param");
         return true;
     }
 
@@ -153,12 +154,17 @@ contract Vineyard is ERC721, ERC2981 {
     /// @param _tokenAttributes array of attribute ints [location, elevation, soilType]
     function newVineyards(int256[] calldata _tokenAttributes) public payable {
         uint256 price = ISaleParams(saleParams).getSalesPrice(totalSupply);
-        require(msg.value >= price, "Value below price");
+        require(msg.value >= price, "below price");
         if (price == 0) {
             require(freeMints[_msgSender()] < 5, "max free mints");
             freeMints[_msgSender()]++;
         }
         _mintVineyard(_tokenAttributes, false);
+
+        if (totalSupply >= 5000) {
+            IGrape(addressStorage.grape()).mint(5000);
+            IVinegar(addressStorage.vinegar()).mintReward();
+        }
     }
 
     /// @notice mints a new vineyard for free by burning a giveaway token
@@ -182,6 +188,14 @@ contract Vineyard is ERC721, ERC2981 {
         tokenAttributes[tokenId] = _tokenAttributes;
         totalSupply += 1;
 
+        if (totalSupply == 500) {
+            unlockedLocales = 15;
+        } else if (totalSupply == 2500) {
+            unlockedLocales = 16;
+        } else if (totalSupply == 5000) {
+            unlockedLocales = 17;
+        }
+
         emit VineyardMinted(
             tokenId,
             _tokenAttributes[0],
@@ -196,7 +210,7 @@ contract Vineyard is ERC721, ERC2981 {
             sprinkler[_tokenId] + 156 weeks < block.timestamp,
             "already sprinkled"
         );
-        require(msg.value >= 0.01 ether, "Value below price");
+        require(msg.value >= 0.01 ether, "below price");
         sprinkler[_tokenId] = block.timestamp;
 
         emit SprinklerPurchased(_tokenId);
@@ -220,7 +234,7 @@ contract Vineyard is ERC721, ERC2981 {
     /// @notice marks game as started triggering the first planting season to begin
     function start() public {
         require(_msgSender() == deployer, "!deployer");
-        require(gameStart == 0, "Game already started");
+        require(gameStart == 0, "already started");
         gameStart = block.timestamp;
         emit Start(uint48(block.timestamp));
     }
@@ -242,9 +256,9 @@ contract Vineyard is ERC721, ERC2981 {
 
     /// @notice plants the selected vineyard
     function plant(uint256 _tokenId) public {
-        require(plantingTime(), "Not planting time");
+        require(plantingTime(), "!planting time");
         uint256 season = currSeason();
-        require(planted[_tokenId] != season, "Vineyard already planted");
+        require(planted[_tokenId] != season, "already planted");
         planted[_tokenId] = season;
         watered[_tokenId] = block.timestamp;
         delete grapesHarvested[_tokenId];
@@ -260,11 +274,11 @@ contract Vineyard is ERC721, ERC2981 {
 
     /// @notice harvests the selected vineyard
     function harvest(uint256 _tokenId) public {
-        require(ownerOf(_tokenId) == _msgSender(), "Not owner");
-        require(harvestTime(), "Not harvest time");
+        require(ownerOf(_tokenId) == _msgSender(), "!owner");
+        require(harvestTime(), "!harvest time");
         uint256 season = currSeason();
-        require(planted[_tokenId] == season, "Vineyard already harvested");
-        require(vineyardAlive(_tokenId), "Vineyard not alive");
+        require(planted[_tokenId] == season, "already harvested");
+        require(vineyardAlive(_tokenId), "!alive");
         delete planted[_tokenId];
 
         // check for harvest failure (too many grapes harvested)
@@ -308,7 +322,7 @@ contract Vineyard is ERC721, ERC2981 {
 
     /// @notice waters the selected vineyard
     function water(uint256 _tokenId) public {
-        require(canWater(_tokenId), "Vineyard can't be watered");
+        require(canWater(_tokenId), "!waterable");
         watered[_tokenId] = block.timestamp;
     }
 

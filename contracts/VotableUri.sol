@@ -67,7 +67,7 @@ contract VotableUri {
             "Too soon"
         );
         IWineBottle bottle = IWineBottle(addressStorage.bottle());
-        require(bottle.ownerOf(_tokenId) == msg.sender, "Bottle not owned");
+        require(bottle.ownerOf(_tokenId) == msg.sender, "Bottle !owned");
 
         startTimestamp = block.timestamp;
         voted[_tokenId] = block.timestamp;
@@ -83,9 +83,9 @@ contract VotableUri {
     /// @param _tokenId bottle to vote with
     function support(uint256 _tokenId) public {
         IWineBottle bottle = IWineBottle(addressStorage.bottle());
-        require(bottle.ownerOf(_tokenId) == msg.sender, "Bottle not owned");
+        require(bottle.ownerOf(_tokenId) == msg.sender, "Bottle !owned");
         require(voted[_tokenId] + 36 hours < block.timestamp, "Double vote");
-        require(startTimestamp + 36 hours > block.timestamp, "No queue");
+        require(startTimestamp + 36 hours > block.timestamp, "!queue");
 
         voted[_tokenId] = block.timestamp;
         forVotes += bottle.bottleAge(_tokenId);
@@ -96,9 +96,9 @@ contract VotableUri {
     /// @param _tokenId bottle to vote with
     function retort(uint256 _tokenId) public {
         IWineBottle bottle = IWineBottle(addressStorage.bottle());
-        require(bottle.ownerOf(_tokenId) == msg.sender, "Bottle not owned");
+        require(bottle.ownerOf(_tokenId) == msg.sender, "Bottle !owned");
         require(voted[_tokenId] + 36 hours < block.timestamp, "Double vote");
-        require(startTimestamp + 36 hours > block.timestamp, "No queue");
+        require(startTimestamp + 36 hours > block.timestamp, "!queue");
 
         voted[_tokenId] = block.timestamp;
         againstVotes += bottle.bottleAge(_tokenId);

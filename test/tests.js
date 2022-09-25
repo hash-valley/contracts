@@ -276,14 +276,14 @@ describe("Hash Valley tests", function () {
     it("can't plant before game start", async () => {
       await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
       await expect(vineyard.connect(accounts[1]).plant(0)).to.be.revertedWith(
-        "Not planting time"
+        "!planting time"
       );
     });
 
     it("can't harvest before game start", async () => {
       await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
       await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "Not harvest time"
+        "!harvest time"
       );
     });
 
@@ -349,7 +349,7 @@ describe("Hash Valley tests", function () {
     it("game already started", async () => {
       const start = await vineyard.gameStart();
       expect(Number(start)).to.be.greaterThan(0);
-      await expect(vineyard.start()).to.be.revertedWith("Game already started");
+      await expect(vineyard.start()).to.be.revertedWith("already started");
     });
 
     it("can plant", async () => {
@@ -360,7 +360,7 @@ describe("Hash Valley tests", function () {
     it("can't plant after 1 week", async () => {
       await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
       await expect(vineyard.connect(accounts[1]).plant(0)).to.be.revertedWith(
-        "Not planting time"
+        "!planting time"
       );
     });
 
@@ -369,7 +369,7 @@ describe("Hash Valley tests", function () {
       const planted = Number(await vineyard.watered(0));
 
       await expect(vineyard.connect(accounts[1]).water(0)).to.be.revertedWith(
-        "Vineyard can't be watered"
+        "!waterable"
       );
 
       // can be watered after 24 hours
@@ -382,7 +382,7 @@ describe("Hash Valley tests", function () {
 
       // can't be watered again yet
       await expect(vineyard.connect(accounts[1]).water(0)).to.be.revertedWith(
-        "Vineyard can't be watered"
+        "!waterable"
       );
 
       // can water again after another 24 hours
@@ -405,7 +405,7 @@ describe("Hash Valley tests", function () {
       time = time + 2;
       await ethers.provider.send("evm_increaseTime", [time]);
       await expect(vineyard.connect(accounts[1]).water(0)).to.be.revertedWith(
-        "Vineyard can't be watered"
+        "!waterable"
       );
     });
 
@@ -442,7 +442,7 @@ describe("Hash Valley tests", function () {
       await ethers.provider.send("evm_increaseTime", [seasonLength - 200]);
       await ethers.provider.send("evm_mine", []);
       await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "Vineyard not alive"
+        "!alive"
       );
     });
 
@@ -456,7 +456,7 @@ describe("Hash Valley tests", function () {
       }
 
       await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "Not harvest time"
+        "!harvest time"
       );
 
       await ethers.provider.send("evm_increaseTime", [time]);
@@ -469,7 +469,7 @@ describe("Hash Valley tests", function () {
 
       await ethers.provider.send("evm_increaseTime", [time]);
       await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "Vineyard already harvested"
+        "already harvested"
       );
     });
 
@@ -483,7 +483,7 @@ describe("Hash Valley tests", function () {
       }
 
       await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "Not harvest time"
+        "!harvest time"
       );
     });
 
@@ -506,7 +506,7 @@ describe("Hash Valley tests", function () {
 
       // can't harvest early
       await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "Not harvest time"
+        "!harvest time"
       );
 
       // can harvest on time
@@ -534,7 +534,7 @@ describe("Hash Valley tests", function () {
       }
 
       await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "Not harvest time"
+        "!harvest time"
       );
     });
 
@@ -575,7 +575,7 @@ describe("Hash Valley tests", function () {
 
       await expect(
         vineyard.connect(accounts[1]).waterMultiple([0, 1, 2])
-      ).to.be.revertedWith("Vineyard can't be watered");
+      ).to.be.revertedWith("!waterable");
     });
 
     it("harvest multiple", async () => {
@@ -592,7 +592,7 @@ describe("Hash Valley tests", function () {
       // can't harvest early
       await expect(
         vineyard.connect(accounts[1]).harvestMultiple([0, 1, 2])
-      ).to.be.revertedWith("Not harvest time");
+      ).to.be.revertedWith("!harvest time");
 
       // can harvest on time
       await ethers.provider.send("evm_increaseTime", [time]);
@@ -650,39 +650,39 @@ describe("Hash Valley tests", function () {
   describe("Cellar", function () {
     beforeEach(async () => {
       await deploy();
-      await vineyard.newVineyards([12, 13, 4]);
-      await vineyard.newVineyards([12, 13, 4]);
-      await vineyard.newVineyards([12, 13, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
+      await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
       await vineyard.start();
-      await vineyard.plantMultiple([0, 1, 2]);
+      await vineyard.connect(accounts[1]).plantMultiple([0, 1, 2]);
 
       let time = Number(await vineyard.minWaterTime(0));
       for (let i = 0; i <= 18; i++) {
         await ethers.provider.send("evm_increaseTime", [time]);
-        await vineyard.waterMultiple([0, 1, 2]);
+        await vineyard.connect(accounts[1]).waterMultiple([0, 1, 2]);
       }
 
       await ethers.provider.send("evm_increaseTime", [time]);
-      await vineyard.harvestMultiple([0, 1, 2]);
-      await bottle.setApprovalForAll(cellar.address, true);
+      await vineyard.connect(accounts[1]).harvestMultiple([0, 1, 2]);
+      await bottle.connect(accounts[1]).setApprovalForAll(cellar.address, true);
     });
 
     it("stake bottle", async () => {
-      await cellar.stake(0);
-      await cellar.stake(1);
-      await cellar.stake(2);
+      await cellar.connect(accounts[1]).stake(0);
+      await cellar.connect(accounts[1]).stake(1);
+      await cellar.connect(accounts[1]).stake(2);
       await ethers.provider.send("evm_increaseTime", [31104000]);
       await ethers.provider.send("evm_mine", []);
-      await cellar.withdraw(0);
-      await cellar.withdraw(1);
-      await cellar.withdraw(2);
+      await cellar.connect(accounts[1]).withdraw(0);
+      await cellar.connect(accounts[1]).withdraw(1);
+      await cellar.connect(accounts[1]).withdraw(2);
 
       // vinegar received from one spoiled bottle
       const oneYear = "4745000000000000000000000000000";
       // vinegar received from three spoiled bottle
       const threeYears = ethers.BigNumber.from(oneYear).mul(3).toString();
 
-      const vinegarBalance = await vinegar.balanceOf(accounts[0].address);
+      const vinegarBalance = await vinegar.balanceOf(accounts[1].address);
       // if all three bottles spoiled, this should pass
       // if one of them didn't, the rest of this test will fail anyways
       // in which case just run it again until the random numbers work out
@@ -699,14 +699,16 @@ describe("Hash Valley tests", function () {
         "ERC721: owner query for nonexistent token"
       );
 
-      await bottle.rejuvenate(0);
-      const newVinegarBalance = await vinegar.balanceOf(accounts[0].address);
+      await bottle.connect(accounts[1]).rejuvenate(0);
+      const newVinegarBalance = await vinegar.balanceOf(accounts[1].address);
       expect(newVinegarBalance.toString()).to.equal("0");
 
       const newBottleOwner = await bottle.ownerOf(3);
-      expect(newBottleOwner).to.equal(accounts[0].address);
+      expect(newBottleOwner).to.equal(accounts[1].address);
 
-      await expect(bottle.rejuvenate(0)).to.be.revertedWith("cannot rejuve");
+      await expect(
+        bottle.connect(accounts[1]).rejuvenate(0)
+      ).to.be.revertedWith("can't rejuve");
     });
 
     it("spoil chance", async () => {
@@ -788,7 +790,7 @@ describe("Hash Valley tests", function () {
       const newAddress = accounts[1].address;
 
       await expect(vineUri.suggest(2, newCid, newAddress)).to.be.revertedWith(
-        "Bottle not owned"
+        "Bottle !owned"
       );
     });
 
@@ -800,11 +802,11 @@ describe("Hash Valley tests", function () {
       await ethers.provider.send("evm_increaseTime", [36 * 60 * 60]);
       await ethers.provider.send("evm_mine", []);
 
-      await expect(vineUri.support(2)).to.be.revertedWith("Bottle not owned");
-      await expect(vineUri.support(1)).to.be.revertedWith("No queue");
+      await expect(vineUri.support(2)).to.be.revertedWith("Bottle !owned");
+      await expect(vineUri.support(1)).to.be.revertedWith("!queue");
 
-      await expect(vineUri.retort(2)).to.be.revertedWith("Bottle not owned");
-      await expect(vineUri.retort(1)).to.be.revertedWith("No queue");
+      await expect(vineUri.retort(2)).to.be.revertedWith("Bottle !owned");
+      await expect(vineUri.retort(1)).to.be.revertedWith("!queue");
     });
 
     it("can re-suggest if not settled within 12 hours of passing", async () => {
@@ -1101,10 +1103,11 @@ describe("Hash Valley tests", function () {
     });
   });
 
-  describe("Special Locs", function () {
+  describe.only("Special Locs", function () {
     beforeEach(async () => {
       await deploy();
 
+      await vineyard.unlockLocale();
       await vineyard.unlockLocale();
       await vineyard.unlockLocale();
 

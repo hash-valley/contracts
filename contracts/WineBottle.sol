@@ -226,7 +226,7 @@ contract WineBottle is ERC721, ERC2981 {
 
     /// @notice revives a spoiled bottle
     function rejuvenate(uint256 _oldTokenId) public returns (uint256) {
-        require(attributes[_oldTokenId].length > 0, "cannot rejuve");
+        require(attributes[_oldTokenId].length > 0, "can't rejuve");
         address cellar = addressStorage.cellar();
         uint256 cellarTime = ICellar(cellar).cellarTime(_oldTokenId);
         IVinegar(addressStorage.vinegar()).rejuvenationCost(

@@ -42,7 +42,7 @@ contract AddressStorage is IAddressStorage, Ownable {
         address _vineUri
     ) public {
         require(addressesSet == false, "already set");
-        require(msg.sender == owner(), "not deployer");
+        require(msg.sender == owner(), "!deployer");
         cellar = _cellar;
         vinegar = _vinegar;
         vineyard = _vineyard;

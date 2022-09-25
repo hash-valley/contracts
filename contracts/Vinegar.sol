@@ -29,20 +29,26 @@ contract Vinegar is ERC20 {
         require(
             _msgSender() == addressStorage.wineUri() ||
                 _msgSender() == addressStorage.vineUri(),
-            "invalid caller"
+            "invalid sender"
         );
         _mint(recipient, 500e18);
     }
 
     /// @notice mints tokens to recipient who spoiled their bottle
     function spoilReward(address recipient, uint256 cellarAge) external {
-        require(_msgSender() == addressStorage.cellar(), "not cellar");
+        require(_msgSender() == addressStorage.cellar(), "!cellar");
         _mint(recipient, ageToVinegar(cellarAge));
+    }
+
+    /// @notice mints tokens as bonus
+    function mintReward() external {
+        require(_msgSender() == addressStorage.vineyard(), "!vine");
+        _mint(tx.origin, 5000e18);
     }
 
     /// @notice burns the specified amount of tokens
     function rejuvenationCost(address account, uint256 cellarAge) external {
-        require(_msgSender() == addressStorage.bottle(), "Not Bottle");
+        require(_msgSender() == addressStorage.bottle(), "!bottle");
         uint256 cost = ISpellParams(addressStorage.spellParams()).rejuveCost(
             ageToVinegar(cellarAge)
         );
@@ -51,7 +57,7 @@ contract Vinegar is ERC20 {
 
     /// @notice burns tokens for withering
     function witherCost(uint256 amount) external {
-        require(_msgSender() == addressStorage.alchemy(), "Not Bottle");
+        require(_msgSender() == addressStorage.alchemy(), "!bottle");
         _burn(tx.origin, amount);
     }
 
