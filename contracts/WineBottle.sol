@@ -337,8 +337,10 @@ contract WineBottle is ERC721, ERC2981 {
         uint8[] memory attr = attributes[_tokenId];
         string memory age = UriUtils.uint2str(bottleAge(_tokenId));
 
-        uint256 image_key = attr[0];
-        if (image_key == 3) image_key += attr[1];
+        string memory image_key = UriUtils.uint2str(attr[0]);
+        if (attr[0] == 3) {
+            image_key = string.concat("3-", UriUtils.uint2str(attr[1]));
+        }
 
         string memory json = string.concat(
             string.concat(
@@ -351,7 +353,7 @@ contract WineBottle is ERC721, ERC2981 {
                 '", "image": "',
                 IVotableUri(addressStorage.wineUri()).image(),
                 "/",
-                UriUtils.uint2str(image_key),
+                image_key,
                 '.png", "description": "Grown from vineyards, the age of a bottle signifies its weight in the Hash Valley Council. Stake in the cellar to age even faster.", "animation_url": "',
                 IVotableUri(addressStorage.wineUri()).uri()
             ),

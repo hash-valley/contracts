@@ -145,6 +145,7 @@ async function deploy() {
     console.log("unlocking locales");
     await vineyard.unlockLocale();
     await vineyard.unlockLocale();
+    await vineyard.unlockLocale();
   }
 
   const data = JSON.stringify(
@@ -164,6 +165,7 @@ async function deploy() {
       alchemy_address: alchemy.address,
       grape_address: grape.address,
       spell_params_address: spellParams.address,
+      badge_address: ty.address,
     },
     null,
     2
