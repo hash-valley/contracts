@@ -61,6 +61,8 @@ contract Vineyard is ERC721, ERC2981 {
     int256[2][18] private mintReqs;
     uint8[18] public climates;
 
+    int256 private unlockedLocales = 14;
+
     // EVENTS
     event VineyardMinted(
         uint256 tokenId,
@@ -79,6 +81,7 @@ contract Vineyard is ERC721, ERC2981 {
         uint256 harvested,
         uint256 remaining
     );
+    event LocaleUnlocked(int256 locales);
 
     // CONSTRUCTOR
     constructor(
@@ -97,6 +100,8 @@ contract Vineyard is ERC721, ERC2981 {
         }
 
         climates = _climates;
+
+        emit LocaleUnlocked(unlockedLocales);
     }
 
     // called once to init royalties
@@ -120,12 +125,11 @@ contract Vineyard is ERC721, ERC2981 {
         saleParams = _address;
     }
 
-    int256 private unlockedLocales = 14;
-
     /// @notice to manage sales params
     function unlockLocale() public {
         require(_msgSender() == deployer, "!deployer");
         unlockedLocales++;
+        emit LocaleUnlocked(unlockedLocales);
     }
 
     /// @notice validates minting attributes
@@ -135,7 +139,10 @@ contract Vineyard is ERC721, ERC2981 {
     ) public view returns (bool) {
         require(_tokenAttributes.length == 3, "wrong #params");
         if (giveaway) {
-            require(_tokenAttributes[0] <= unlockedLocales, "invalid 1st param");
+            require(
+                _tokenAttributes[0] <= unlockedLocales,
+                "invalid 1st param"
+            );
         } else {
             require(_tokenAttributes[0] <= 14, "invalid 1st param");
         }
@@ -190,10 +197,13 @@ contract Vineyard is ERC721, ERC2981 {
 
         if (totalSupply == 500) {
             unlockedLocales = 15;
+            emit LocaleUnlocked(unlockedLocales);
         } else if (totalSupply == 2500) {
             unlockedLocales = 16;
+            emit LocaleUnlocked(unlockedLocales);
         } else if (totalSupply == 5000) {
             unlockedLocales = 17;
+            emit LocaleUnlocked(unlockedLocales);
         }
 
         emit VineyardMinted(
