@@ -6,4 +6,12 @@ contract SaleParams {
         if (supply < 1000) return 0 ether;
         return ((supply - 500) / 500) * .01 ether;
     }
+
+    function airdropCutoff() external pure returns (uint256) {
+        return 5000;
+    }
+
+    function freeMintsPerAddress() external pure returns (uint256) {
+        return 5;
+    }
 }

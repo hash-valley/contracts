@@ -5,12 +5,12 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract GiveawayToken is ERC20 {
     constructor() ERC20("Wine Merchant", "WM") {
-        _mint(msg.sender, 150 * 10**decimals());
+        _mint(msg.sender, 250 * 1e18);
     }
 
     /// @notice burns one token after it has been spent
     function burnOne() external {
-        _burn(tx.origin, 1 * 10**decimals());
+        _burn(tx.origin, 1 * 1e18);
     }
 
     uint8 private airdropped = 0;

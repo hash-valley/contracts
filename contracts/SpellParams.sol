@@ -22,19 +22,19 @@ contract SpellParams is ISpellParams {
         ).startOfSeason();
 
         uint256 timePassed = block.timestamp - seasonStart;
+        uint256 seasonLength = season == 1 ? 3 weeks : 12 weeks;
         return
-            (15_000e18 * timePassed) /
-            (season == 1 ? 3 weeks : 12 weeks) +
+            ((15_000e18 * (seasonLength - timePassed)) / seasonLength) +
             5_000e18;
     }
 
-    function defendCost(uint256 target) public view override returns (uint256) {
+    function defendCost(uint256 target) public pure override returns (uint256) {
         return 2_000e18;
     }
 
     function vitalityCost(uint256 target)
         public
-        view
+        pure
         override
         returns (uint256)
     {
@@ -43,7 +43,7 @@ contract SpellParams is ISpellParams {
 
     function rejuveCost(uint256 ageInVinegar)
         public
-        view
+        pure
         override
         returns (uint256)
     {

@@ -30,6 +30,10 @@ interface IGiveawayToken {
 
 interface ISaleParams {
     function getSalesPrice(uint256 supply) external pure returns (uint256);
+
+    function airdropCutoff() external pure returns (uint256);
+
+    function freeMintsPerAddress() external pure returns (uint256);
 }
 
 contract Vineyard is ERC721, ERC2981 {
@@ -160,16 +164,20 @@ contract Vineyard is ERC721, ERC2981 {
     /// @notice mints a new vineyard
     /// @param _tokenAttributes array of attribute ints [location, elevation, soilType]
     function newVineyards(int256[] calldata _tokenAttributes) public payable {
-        uint256 price = ISaleParams(saleParams).getSalesPrice(totalSupply);
+        ISaleParams _saleParams = ISaleParams(saleParams);
+        uint256 price = _saleParams.getSalesPrice(totalSupply);
         require(msg.value >= price, "below price");
         if (price == 0) {
-            require(freeMints[_msgSender()] < 5, "max free mints");
+            require(
+                freeMints[_msgSender()] < _saleParams.freeMintsPerAddress(),
+                "max free mints"
+            );
             freeMints[_msgSender()]++;
         }
         _mintVineyard(_tokenAttributes, false);
 
-        if (totalSupply >= 5000) {
-            IGrape(addressStorage.grape()).mint(5000);
+        if (totalSupply >= _saleParams.airdropCutoff()) {
+            IGrape(addressStorage.grape()).mint(5000e18);
             IVinegar(addressStorage.vinegar()).mintReward();
         }
     }
@@ -399,7 +407,7 @@ contract Vineyard is ERC721, ERC2981 {
             _grapesHarvested;
 
         grapesHarvested[_tokenId] += harvestable;
-        IGrape(addressStorage.grape()).mint(harvestable);
+        IGrape(addressStorage.grape()).mint(harvestable * 1e18);
         emit GrapesHarvested(
             _tokenId,
             _currSeason,

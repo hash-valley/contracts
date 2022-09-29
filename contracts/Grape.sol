@@ -15,13 +15,13 @@ contract Grape is IGrape, ERC20 {
 
     /// @notice mint grapes from eligible vineyard
     function mint(uint256 amount) public override {
-        require(_msgSender() == addressStorage.vineyard(), "invalid sender");
-        _mint(tx.origin, amount * 10**decimals());
+        require(_msgSender() == addressStorage.vineyard(), "!vine");
+        _mint(tx.origin, amount);
     }
 
     /// @notice burns grapes for alchemy
     function burn(uint256 amount) public override {
-        require(_msgSender() == addressStorage.alchemy(), "invalid sender");
+        require(_msgSender() == addressStorage.alchemy(), "!alchemy");
         _burn(tx.origin, amount);
     }
 }

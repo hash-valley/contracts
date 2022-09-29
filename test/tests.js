@@ -178,8 +178,8 @@ describe("Hash Valley tests", function () {
       ]);
     });
 
-    it.skip("first 100 are free, 0.07 eth after that", async () => {
-      for (let i = 0; i < 100; i++) {
+    it("5 free mints per address", async () => {
+      for (let i = 0; i < 5; i++) {
         const tx = await vineyard.connect(accounts[1]).newVineyards([4, 2, 4]);
         expect(tx)
           .to.emit(vineyard, "Transfer")
@@ -190,21 +190,8 @@ describe("Hash Valley tests", function () {
           );
       }
       await expect(
-        vineyard.connect(accounts[1]).newVineyards([4, 2, 4], {
-          value: ethers.utils.parseEther("0.04"),
-        })
-      ).to.be.revertedWith("Value below price");
-
-      const tx = await vineyard
-        .connect(accounts[1])
-        .newVineyards([4, 2, 4], { value: ethers.utils.parseEther(".07") });
-      expect(tx)
-        .to.emit(vineyard, "Transfer")
-        .withArgs(
-          "0x0000000000000000000000000000000000000000",
-          accounts[1].address,
-          100
-        );
+        vineyard.connect(accounts[1]).newVineyards([4, 2, 4])
+      ).to.be.revertedWith("max free mints");
     });
 
     it("use giveaway token", async () => {
@@ -957,6 +944,23 @@ describe("Hash Valley tests", function () {
       await vineyard.plantMultiple([0, 1]);
     });
 
+    it("wither cost", async () => {
+      let time = 7 * day;
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      let cost = (await spellParams.witherCost(0)).toString();
+      expect(cost.slice(0, 5)).to.equal("14999");
+      expect(cost.length).to.equal(23);
+
+      await ethers.provider.send("evm_increaseTime", [time]);
+      await ethers.provider.send("evm_mine", []);
+
+      cost = (await spellParams.witherCost(0)).toString();
+      expect(cost.slice(0, 4)).to.equal("9999");
+      expect(cost.length).to.equal(22);
+    });
+
     it("harvest grapes, proportionally to bottle failure", async () => {
       let time = 5 * day;
       await ethers.provider.send("evm_increaseTime", [time]);
@@ -1103,7 +1107,7 @@ describe("Hash Valley tests", function () {
     });
   });
 
-  describe.only("Special Locs", function () {
+  describe("Special Locs", function () {
     beforeEach(async () => {
       await deploy();
 

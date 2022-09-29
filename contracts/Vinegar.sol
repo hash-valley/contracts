@@ -57,7 +57,7 @@ contract Vinegar is ERC20 {
 
     /// @notice burns tokens for withering
     function witherCost(uint256 amount) external {
-        require(_msgSender() == addressStorage.alchemy(), "!bottle");
+        require(_msgSender() == addressStorage.alchemy(), "!alchemy");
         _burn(tx.origin, amount);
     }
 
