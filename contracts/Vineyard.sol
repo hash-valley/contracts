@@ -25,7 +25,7 @@ import "./interfaces/IVinegar.sol";
 // import "hardhat/console.sol";
 
 interface IGiveawayToken {
-    function burnOne() external;
+    function burnOne(address caller) external;
 }
 
 interface ISaleParams {
@@ -177,14 +177,14 @@ contract Vineyard is ERC721, ERC2981 {
         _mintVineyard(_tokenAttributes, false);
 
         if (totalSupply >= _saleParams.airdropCutoff()) {
-            IGrape(addressStorage.grape()).mint(5000e18);
-            IVinegar(addressStorage.vinegar()).mintReward();
+            IGrape(addressStorage.grape()).mint(_msgSender(), 5000e18);
+            IVinegar(addressStorage.vinegar()).mintReward(_msgSender());
         }
     }
 
     /// @notice mints a new vineyard for free by burning a giveaway token
     function newVineyardGiveaway(int256[] calldata _tokenAttributes) public {
-        IGiveawayToken(addressStorage.giveawayToken()).burnOne();
+        IGiveawayToken(addressStorage.giveawayToken()).burnOne(_msgSender());
         _mintVineyard(_tokenAttributes, true);
     }
 
@@ -407,7 +407,7 @@ contract Vineyard is ERC721, ERC2981 {
             _grapesHarvested;
 
         grapesHarvested[_tokenId] += harvestable;
-        IGrape(addressStorage.grape()).mint(harvestable * 1e18);
+        IGrape(addressStorage.grape()).mint(_msgSender(), harvestable * 1e18);
         emit GrapesHarvested(
             _tokenId,
             _currSeason,

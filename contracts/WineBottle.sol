@@ -237,7 +237,7 @@ contract WineBottle is ERC721, ERC2981 {
         uint256 tokenId = lastId + 1;
         attributes[tokenId] = attributes[_oldTokenId];
         delete attributes[_oldTokenId];
-        _safeMint(tx.origin, tokenId);
+        _safeMint(_msgSender(), tokenId);
         lastId = tokenId;
         emit Rejuvenated(_oldTokenId, tokenId);
         return tokenId;

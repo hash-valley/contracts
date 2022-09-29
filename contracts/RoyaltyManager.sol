@@ -5,7 +5,7 @@ import "./interfaces/IAddressStorage.sol";
 
 interface QuixoticExchange {
     function setRoyalty(
-        address contractAddress,
+        address _erc721address,
         address payable _payoutAddress,
         uint256 _payoutPerMille
     ) external;

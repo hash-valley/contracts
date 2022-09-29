@@ -41,9 +41,9 @@ contract Vinegar is ERC20 {
     }
 
     /// @notice mints tokens as bonus
-    function mintReward() external {
+    function mintReward(address caller) external {
         require(_msgSender() == addressStorage.vineyard(), "!vine");
-        _mint(tx.origin, 5000e18);
+        _mint(caller, 5000e18);
     }
 
     /// @notice burns the specified amount of tokens
@@ -56,9 +56,9 @@ contract Vinegar is ERC20 {
     }
 
     /// @notice burns tokens for withering
-    function witherCost(uint256 amount) external {
+    function witherCost(address caller, uint256 amount) external {
         require(_msgSender() == addressStorage.alchemy(), "!alchemy");
-        _burn(tx.origin, amount);
+        _burn(caller, amount);
     }
 
     /// @notice conversion from seconds in cellar to vinegar tokens (wei)

@@ -38,7 +38,7 @@ contract Alchemy is IAlchemy {
             deadline,
             IVine(addressStorage.vineyard()).currSeason()
         );
-        IVinegar(addressStorage.vinegar()).witherCost(cost);
+        IVinegar(addressStorage.vinegar()).witherCost(msg.sender, cost);
         emit Wither(target, deadline, cost);
     }
 
@@ -53,7 +53,7 @@ contract Alchemy is IAlchemy {
             target
         );
         delete withered[target];
-        IGrape(addressStorage.grape()).burn(cost);
+        IGrape(addressStorage.grape()).burn(msg.sender, cost);
         emit Defend(target, cost);
     }
 
@@ -69,7 +69,7 @@ contract Alchemy is IAlchemy {
         uint256 cost = ISpellParams(addressStorage.spellParams()).vitalityCost(
             target
         );
-        IGrape(addressStorage.grape()).burn(cost);
+        IGrape(addressStorage.grape()).burn(msg.sender, cost);
         emit Vitality(target, cost);
     }
 

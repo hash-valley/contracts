@@ -9,8 +9,8 @@ contract GiveawayToken is ERC20 {
     }
 
     /// @notice burns one token after it has been spent
-    function burnOne() external {
-        _burn(tx.origin, 1 * 1e18);
+    function burnOne(address caller) external {
+        _burn(caller, 1 * 1e18);
     }
 
     uint8 private airdropped = 0;
