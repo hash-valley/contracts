@@ -15,7 +15,7 @@ async function deploy() {
   let market_address;
   if (network.chainId === 420) {
     //goerli
-    market_address = config.kovan_quixotic;
+    market_address = config.goerli_quixotic;
   } else if (network.chainId === 10) {
     // optimism
     market_address = config.op_quixotic;
