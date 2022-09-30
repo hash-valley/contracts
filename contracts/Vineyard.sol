@@ -517,7 +517,10 @@ contract Vineyard is ERC721, ERC2981 {
     // URI
     /// @notice set a new base uri (backup measure)
     function setBaseURI(string memory _baseUri) public {
-        require(_msgSender() == deployer, "!deployer");
+        require(
+            _msgSender() == deployer || _msgSender() == owner(),
+            "!deployer"
+        );
         baseUri = _baseUri;
     }
 
