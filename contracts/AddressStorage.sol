@@ -4,6 +4,10 @@ pragma solidity ^0.8.0;
 import "./interfaces/IAddressStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+interface IBaseURI {
+    function setBaseURI(string memory _baseUri) external;
+}
+
 contract AddressStorage is IAddressStorage, Ownable {
     address public override cellar;
     address public override vinegar;
@@ -75,5 +79,13 @@ contract AddressStorage is IAddressStorage, Ownable {
     function newSpellParams(address _newParams) external onlyOwner {
         spellParams = _newParams;
         emit AddressesSet();
+    }
+
+    function setVineBaseUri(string memory _baseUri) external onlyOwner {
+        IBaseURI(vineyard).setBaseURI(_baseUri);
+    }
+
+    function setWineBaseUri(string memory _baseUri) external onlyOwner {
+        IBaseURI(bottle).setBaseURI(_baseUri);
     }
 }

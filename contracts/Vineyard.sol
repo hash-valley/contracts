@@ -95,7 +95,7 @@ contract Vineyard is ERC721, ERC2981 {
         uint8[18] memory _climates
     ) ERC721("Hash Valley Vineyard", "VNYD") {
         deployer = _msgSender();
-        setBaseURI(_baseUri);
+        baseUri = _baseUri;
         addressStorage = IAddressStorage(_addressStorage);
         _setDefaultRoyalty(_msgSender(), 750);
 
@@ -517,10 +517,7 @@ contract Vineyard is ERC721, ERC2981 {
     // URI
     /// @notice set a new base uri (backup measure)
     function setBaseURI(string memory _baseUri) public {
-        require(
-            _msgSender() == deployer || _msgSender() == owner(),
-            "!deployer"
-        );
+        require(_msgSender() == address(addressStorage), "!address_storage");
         baseUri = _baseUri;
     }
 

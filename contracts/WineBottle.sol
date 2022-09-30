@@ -36,7 +36,6 @@ interface IVineyard {
 
 contract WineBottle is ERC721, ERC2981 {
     IAddressStorage private addressStorage;
-    address public deployer;
     uint256 public totalSupply;
     uint256 public lastId = 0;
     mapping(uint256 => uint256) public bottleMinted;
@@ -63,9 +62,8 @@ contract WineBottle is ERC721, ERC2981 {
         address _addressStorage,
         uint256[] memory _eraBounds
     ) ERC721("Hash Valley Vintage", "VNTG") {
-        deployer = _msgSender();
         addressStorage = IAddressStorage(_addressStorage);
-        setBaseURI(_baseUri);
+        baseUri = _baseUri;
         _setDefaultRoyalty(_msgSender(), 750);
         eraBounds = _eraBounds;
 
@@ -315,10 +313,7 @@ contract WineBottle is ERC721, ERC2981 {
 
     // URI
     function setBaseURI(string memory _baseUri) public {
-        require(
-            _msgSender() == deployer || _msgSender() == owner(),
-            "!deployer"
-        );
+        require(_msgSender() == address(addressStorage), "!address_storage");
         baseUri = _baseUri;
     }
 
