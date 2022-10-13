@@ -14,4 +14,8 @@ contract SaleParams {
     function freeMintsPerAddress() external pure returns (uint256) {
         return 5;
     }
+
+    function sprinklerPrice() external pure returns (uint256) {
+        return 0.01 ether;
+    }
 }

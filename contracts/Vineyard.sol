@@ -29,11 +29,13 @@ interface IGiveawayToken {
 }
 
 interface ISaleParams {
-    function getSalesPrice(uint256 supply) external pure returns (uint256);
+    function getSalesPrice(uint256 supply) external view returns (uint256);
 
-    function airdropCutoff() external pure returns (uint256);
+    function airdropCutoff() external view returns (uint256);
 
-    function freeMintsPerAddress() external pure returns (uint256);
+    function freeMintsPerAddress() external view returns (uint256);
+
+    function sprinklerPrice() external view returns (uint256);
 }
 
 contract Vineyard is ERC721, ERC2981 {
@@ -228,7 +230,10 @@ contract Vineyard is ERC721, ERC2981 {
             sprinkler[_tokenId] + 156 weeks < block.timestamp,
             "already sprinkled"
         );
-        require(msg.value >= 0.01 ether, "below price");
+        ISaleParams _saleParams = ISaleParams(saleParams);
+        uint256 price = _saleParams.sprinklerPrice();
+
+        require(msg.value >= price, "below price");
         sprinkler[_tokenId] = block.timestamp;
 
         emit SprinklerPurchased(_tokenId);
