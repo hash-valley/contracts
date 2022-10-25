@@ -62,7 +62,7 @@ contract Vineyard is ERC721, ERC2981 {
     mapping(uint256 => uint256) public grapesHarvested;
 
     string public baseUri;
-    uint16 public immutable sellerFee = 750;
+    uint16 public immutable sellerFee = 500;
 
     int256[2][18] private mintReqs;
     uint8[18] public climates;
@@ -99,7 +99,7 @@ contract Vineyard is ERC721, ERC2981 {
         deployer = _msgSender();
         baseUri = _baseUri;
         addressStorage = IAddressStorage(_addressStorage);
-        _setDefaultRoyalty(_msgSender(), 750);
+        _setDefaultRoyalty(_msgSender(), sellerFee);
 
         for (uint8 i = 0; i < _mintReqs.length; ++i) {
             mintReqs[i] = _mintReqs[i];

@@ -19,7 +19,7 @@ interface DefaultRoyalty {
 contract RoyaltyManager {
     IAddressStorage private addressStorage;
     QuixoticExchange private quixotic;
-    uint16 private immutable sellerFee = 750;
+    uint16 private immutable sellerFee = 500;
 
     constructor(address _addressStorage, address _quixotic) {
         addressStorage = IAddressStorage(_addressStorage);

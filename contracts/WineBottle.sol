@@ -42,7 +42,7 @@ contract WineBottle is ERC721, ERC2981 {
     mapping(uint256 => uint8[]) public attributes;
 
     string public baseUri;
-    uint16 public immutable sellerFee = 750;
+    uint16 public immutable sellerFee = 500;
 
     uint256 internal wineClasses = 5;
     uint8[5] internal wineSubtypes = [3, 2, 2, 3, 3];
@@ -64,7 +64,7 @@ contract WineBottle is ERC721, ERC2981 {
     ) ERC721("Hash Valley Vintage", "VNTG") {
         addressStorage = IAddressStorage(_addressStorage);
         baseUri = _baseUri;
-        _setDefaultRoyalty(_msgSender(), 750);
+        _setDefaultRoyalty(_msgSender(), sellerFee);
         eraBounds = _eraBounds;
 
         // notes
