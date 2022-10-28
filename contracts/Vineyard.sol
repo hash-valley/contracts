@@ -322,9 +322,9 @@ contract Vineyard is ERC721, ERC2981 {
         }
         lastHarvested[_tokenId] = season;
         if (IAlchemy(addressStorage.alchemy()).vitalized(_tokenId) == season) {
-            xp[_tokenId] += 200 * streak[_tokenId]; // TODO: numbers
+            xp[_tokenId] += 2500 * streak[_tokenId]; // TODO: numbers
         } else {
-            xp[_tokenId] += 100 * streak[_tokenId];
+            xp[_tokenId] += 1000 * streak[_tokenId];
         }
 
         // mint bottle

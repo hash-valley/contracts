@@ -1025,7 +1025,7 @@ describe("Hash Valley tests", function () {
 
       expect(await vineyard.xp(0)).to.equal(0);
       await vineyard.harvest(0);
-      expect(await vineyard.xp(0)).to.equal(200);
+      expect(await vineyard.xp(0)).to.equal(2500);
     });
 
     it("wither and vineyard dies", async () => {
