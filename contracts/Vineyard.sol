@@ -158,7 +158,7 @@ contract Vineyard is ERC721, ERC2981 {
             _tokenAttributes[1] >= lower && _tokenAttributes[1] <= upper,
             "inv 2nd param"
         );
-        require(_tokenAttributes[2] <= 5, "invalid 3rd param");
+        require(_tokenAttributes[2] <= 8, "invalid 3rd param");
         return true;
     }
 
@@ -645,13 +645,16 @@ contract Vineyard is ERC721, ERC2981 {
         "Hypercubic Tesselation Plane"
     ];
 
-    string[6] private soilNames = [
+    string[9] private soilNames = [
         "Rocky",
         "Sandy",
         "Clay",
         "Boggy",
         "Peaty",
-        "Mulch"
+        "Mulch",
+        "Mycelium",
+        "Loamy",
+        "Chalky"
     ];
 
     //ERC2981 stuff
