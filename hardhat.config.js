@@ -29,7 +29,7 @@ module.exports = {
       },
     },
   },
-  defaultNetwork: "localhost",
+  defaultNetwork: "hardhat",
   networks: {
     hardhat: {},
     localhost: {

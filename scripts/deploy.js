@@ -132,7 +132,11 @@ async function deploy() {
   await bottle.initR();
   console.log("royalties initialized");
 
-  await give.airdrop(config.airdrop_recipients, config.airdrop_values);
+  const recips = config.airdrop_recipients.concat(config.raffle_winners);
+  const vals = config.airdrop_values.concat(
+    Array(config.raffle_winners.length).fill(5)
+  );
+  await give.airdrop(recips, vals);
   console.log("vineyard airdrop complete");
 
   const TY = await hre.ethers.getContractFactory("Badge");
