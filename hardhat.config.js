@@ -35,14 +35,6 @@ module.exports = {
     localhost: {
       url: "http://127.0.0.1:8545/",
     },
-    ropsten: {
-      url: `https://eth-ropsten.alchemyapi.io/v2/${config.alchemy}`,
-      accounts: [`0x${config.test_key}`],
-    },
-    rinkeby: {
-      url: `https://eth-rinkeby.alchemyapi.io/v2/${config.alchemy_rink}`,
-      accounts: [`0x${config.test_key}`],
-    },
     optimisticGoerli: {
       url: `https://opt-goerli.g.alchemy.com/v2/${config.alchemy_op_goerli}`,
       accounts: [`0x${config.test_key}`],
