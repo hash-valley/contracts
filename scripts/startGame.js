@@ -7,15 +7,11 @@ async function start() {
   try {
     addresses = require(`../deployments/deployment_${chainId}.json`);
   } catch {
-    throw("couldnt load addresses");
+    throw "couldnt load addresses";
   }
 
   const signer = await ethers.getSigner();
-  const vineyard = new ethers.Contract(
-    addresses.vine_address,
-    ["function start() public"],
-    signer
-  );
+  const vineyard = new ethers.Contract(addresses.vine_address, ["function start() public"], signer);
 
   console.log(`start gmae`);
   const approvalTx = await vineyard.start();

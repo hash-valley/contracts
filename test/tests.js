@@ -58,19 +58,11 @@ describe("Hash Valley tests", function () {
     await wineUri.deployed();
 
     const WineBottle = await hre.ethers.getContractFactory("WineBottle");
-    bottle = await WineBottle.deploy(
-      config.bottle_base_uri,
-      storage.address,
-      config.eraBounds
-    );
+    bottle = await WineBottle.deploy(config.bottle_base_uri, storage.address, config.eraBounds);
     await bottle.deployed();
 
     const VineUri = await hre.ethers.getContractFactory("VotableUri");
-    vineUri = await VineUri.deploy(
-      storage.address,
-      config.vine_animation_uri,
-      config.vine_img_uri
-    );
+    vineUri = await VineUri.deploy(storage.address, config.vine_animation_uri, config.vine_img_uri);
     await vineUri.deployed();
 
     const Vineyard = await hre.ethers.getContractFactory("Vineyard");
@@ -183,29 +175,21 @@ describe("Hash Valley tests", function () {
         const tx = await vineyard.connect(accounts[1]).newVineyards([4, 2, 4]);
         expect(tx)
           .to.emit(vineyard, "Transfer")
-          .withArgs(
-            "0x0000000000000000000000000000000000000000",
-            accounts[1].address,
-            i
-          );
+          .withArgs("0x0000000000000000000000000000000000000000", accounts[1].address, i);
       }
-      await expect(
-        vineyard.connect(accounts[1]).newVineyards([4, 2, 4])
-      ).to.be.revertedWith("max free mints");
+      await expect(vineyard.connect(accounts[1]).newVineyards([4, 2, 4])).to.be.revertedWith(
+        "max free mints"
+      );
     });
 
     it("use giveaway token", async () => {
       const tx = await vineyard.newVineyardGiveaway([4, 2, 4]);
       expect(tx)
         .to.emit(vineyard, "Transfer")
-        .withArgs(
-          "0x0000000000000000000000000000000000000000",
-          accounts[0].address,
-          0
-        );
-      await expect(
-        vineyard.connect(accounts[1]).newVineyardGiveaway([4, 2, 4])
-      ).to.be.revertedWith("ERC20: burn amount exceeds balance");
+        .withArgs("0x0000000000000000000000000000000000000000", accounts[0].address, 0);
+      await expect(vineyard.connect(accounts[1]).newVineyardGiveaway([4, 2, 4])).to.be.revertedWith(
+        "ERC20: burn amount exceeds balance"
+      );
     });
 
     it.skip("use giveaway token with max supply", async () => {
@@ -225,29 +209,23 @@ describe("Hash Valley tests", function () {
       const tx = await vineyard.newVineyardGiveaway([4, 2, 4]);
       expect(tx)
         .to.emit(vineyard, "Transfer")
-        .withArgs(
-          "0x0000000000000000000000000000000000000000",
-          accounts[0].address,
-          5500
-        );
+        .withArgs("0x0000000000000000000000000000000000000000", accounts[0].address, 5500);
     });
 
     it("Correct number of params", async () => {
-      await expect(
-        vineyard.connect(accounts[1]).newVineyards([1, 2, 3, 4])
-      ).to.be.revertedWith("wrong #params");
+      await expect(vineyard.connect(accounts[1]).newVineyards([1, 2, 3, 4])).to.be.revertedWith(
+        "wrong #params"
+      );
 
-      await expect(
-        vineyard.connect(accounts[1]).newVineyards([1, 2])
-      ).to.be.revertedWith("wrong #params");
+      await expect(vineyard.connect(accounts[1]).newVineyards([1, 2])).to.be.revertedWith(
+        "wrong #params"
+      );
     });
 
     it("Only owner can withdraw", async () => {
       await vineyard.connect(accounts[1]).newVineyards([12, 130, 3]);
 
-      await expect(
-        vineyard.connect(accounts[1]).withdrawAll()
-      ).to.be.revertedWith("!deployer");
+      await expect(vineyard.connect(accounts[1]).withdrawAll()).to.be.revertedWith("!deployer");
 
       await vineyard.connect(accounts[0]).withdrawAll();
     });
@@ -262,16 +240,12 @@ describe("Hash Valley tests", function () {
 
     it("can't plant before game start", async () => {
       await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
-      await expect(vineyard.connect(accounts[1]).plant(0)).to.be.revertedWith(
-        "!planting time"
-      );
+      await expect(vineyard.connect(accounts[1]).plant(0)).to.be.revertedWith("!planting time");
     });
 
     it("can't harvest before game start", async () => {
       await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
-      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "!harvest time"
-      );
+      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith("!harvest time");
     });
 
     it("season is 0", async () => {
@@ -287,9 +261,7 @@ describe("Hash Valley tests", function () {
 
     it("airdrop", async () => {
       await token.airdrop([accounts[11].address, accounts[12].address], [2, 1]);
-      await expect(
-        token.airdrop([accounts[11].address], [4])
-      ).to.be.revertedWith("!");
+      await expect(token.airdrop([accounts[11].address], [4])).to.be.revertedWith("!");
       await vineyard.connect(accounts[11]).newVineyardGiveaway([12, 130, 3]);
       await vineyard.connect(accounts[11]).newVineyardGiveaway([12, 130, 3]);
       await expect(
@@ -346,18 +318,14 @@ describe("Hash Valley tests", function () {
 
     it("can't plant after 1 week", async () => {
       await ethers.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
-      await expect(vineyard.connect(accounts[1]).plant(0)).to.be.revertedWith(
-        "!planting time"
-      );
+      await expect(vineyard.connect(accounts[1]).plant(0)).to.be.revertedWith("!planting time");
     });
 
     it("watering", async () => {
       await vineyard.connect(accounts[1]).plant(0);
       const planted = Number(await vineyard.watered(0));
 
-      await expect(vineyard.connect(accounts[1]).water(0)).to.be.revertedWith(
-        "!waterable"
-      );
+      await expect(vineyard.connect(accounts[1]).water(0)).to.be.revertedWith("!waterable");
 
       // can be watered after 24 hours
       let time = Number(await vineyard.minWaterTime(0));
@@ -368,9 +336,7 @@ describe("Hash Valley tests", function () {
       expect(firstWater).to.equal(planted + time + 1);
 
       // can't be watered again yet
-      await expect(vineyard.connect(accounts[1]).water(0)).to.be.revertedWith(
-        "!waterable"
-      );
+      await expect(vineyard.connect(accounts[1]).water(0)).to.be.revertedWith("!waterable");
 
       // can water again after another 24 hours
       await ethers.provider.send("evm_increaseTime", [time]);
@@ -391,9 +357,7 @@ describe("Hash Valley tests", function () {
       // can't water over 48 hours later
       time = time + 2;
       await ethers.provider.send("evm_increaseTime", [time]);
-      await expect(vineyard.connect(accounts[1]).water(0)).to.be.revertedWith(
-        "!waterable"
-      );
+      await expect(vineyard.connect(accounts[1]).water(0)).to.be.revertedWith("!waterable");
     });
 
     it("sprinkler means you don't have to water", async () => {
@@ -428,9 +392,7 @@ describe("Hash Valley tests", function () {
       await vineyard.connect(accounts[1]).plant(0);
       await ethers.provider.send("evm_increaseTime", [seasonLength - 200]);
       await ethers.provider.send("evm_mine", []);
-      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "!alive"
-      );
+      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith("!alive");
     });
 
     it("can't harvest early", async () => {
@@ -442,9 +404,7 @@ describe("Hash Valley tests", function () {
         await vineyard.connect(accounts[1]).water(0);
       }
 
-      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "!harvest time"
-      );
+      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith("!harvest time");
 
       await ethers.provider.send("evm_increaseTime", [time]);
       expect(await vineyard.connect(accounts[1]).harvest(0))
@@ -469,9 +429,7 @@ describe("Hash Valley tests", function () {
         await vineyard.connect(accounts[1]).water(0);
       }
 
-      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "!harvest time"
-      );
+      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith("!harvest time");
     });
 
     it("second season", async () => {
@@ -492,9 +450,7 @@ describe("Hash Valley tests", function () {
       }
 
       // can't harvest early
-      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "!harvest time"
-      );
+      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith("!harvest time");
 
       // can harvest on time
       await ethers.provider.send("evm_increaseTime", [time]);
@@ -520,9 +476,7 @@ describe("Hash Valley tests", function () {
         await vineyard.connect(accounts[1]).water(0);
       }
 
-      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith(
-        "!harvest time"
-      );
+      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith("!harvest time");
     });
 
     it("plant multiple", async () => {
@@ -560,9 +514,9 @@ describe("Hash Valley tests", function () {
       await vineyard.connect(accounts[1]).waterMultiple([0, 1]);
       await ethers.provider.send("evm_increaseTime", [time + 1]);
 
-      await expect(
-        vineyard.connect(accounts[1]).waterMultiple([0, 1, 2])
-      ).to.be.revertedWith("!waterable");
+      await expect(vineyard.connect(accounts[1]).waterMultiple([0, 1, 2])).to.be.revertedWith(
+        "!waterable"
+      );
     });
 
     it("harvest multiple", async () => {
@@ -577,9 +531,9 @@ describe("Hash Valley tests", function () {
       }
 
       // can't harvest early
-      await expect(
-        vineyard.connect(accounts[1]).harvestMultiple([0, 1, 2])
-      ).to.be.revertedWith("!harvest time");
+      await expect(vineyard.connect(accounts[1]).harvestMultiple([0, 1, 2])).to.be.revertedWith(
+        "!harvest time"
+      );
 
       // can harvest on time
       await ethers.provider.send("evm_increaseTime", [time]);
@@ -693,9 +647,7 @@ describe("Hash Valley tests", function () {
       const newBottleOwner = await bottle.ownerOf(3);
       expect(newBottleOwner).to.equal(accounts[1].address);
 
-      await expect(
-        bottle.connect(accounts[1]).rejuvenate(0)
-      ).to.be.revertedWith("can't rejuve");
+      await expect(bottle.connect(accounts[1]).rejuvenate(0)).to.be.revertedWith("can't rejuve");
     });
 
     it("spoil chance", async () => {
@@ -776,9 +728,7 @@ describe("Hash Valley tests", function () {
       const newCid = "ipfs://QmXmtwt2gYUNsPAGsLWyzkPQaATMWM1Q8ZkMUKfeWV5sGU";
       const newAddress = accounts[1].address;
 
-      await expect(vineUri.suggest(2, newCid, newAddress)).to.be.revertedWith(
-        "Bottle !owned"
-      );
+      await expect(vineUri.suggest(2, newCid, newAddress)).to.be.revertedWith("Bottle !owned");
     });
 
     it("only open 36 hours for voting", async () => {
@@ -868,11 +818,7 @@ describe("Hash Valley tests", function () {
 
       expect(tx)
         .to.emit(vineUri, "Retort")
-        .withArgs(
-          await vineUri.startTimestamp(),
-          1,
-          await vineUri.againstVotes()
-        );
+        .withArgs(await vineUri.startTimestamp(), 1, await vineUri.againstVotes());
     });
 
     it("can't double retort", async () => {
@@ -895,9 +841,7 @@ describe("Hash Valley tests", function () {
       expect(tx)
         .to.emit(vineUri, "Complete")
         .withArgs(await vineUri.startTimestamp(), newCid, newAddress);
-      expect((await vinegar.balanceOf(newAddress)).toString()).to.equal(
-        "500000000000000000000"
-      );
+      expect((await vinegar.balanceOf(newAddress)).toString()).to.equal("500000000000000000000");
       expect(await quixotic.payouts(vineyard.address)).to.equal(newAddress);
     });
 
@@ -910,9 +854,7 @@ describe("Hash Valley tests", function () {
       await ethers.provider.send("evm_mine", []);
 
       await vineUri.complete();
-      await expect(vineUri.suggest(0, newCid, newAddress)).to.be.revertedWith(
-        "Too soon"
-      );
+      await expect(vineUri.suggest(0, newCid, newAddress)).to.be.revertedWith("Too soon");
 
       await ethers.provider.send("evm_increaseTime", [180 * 60 * 60 + 1]);
       await ethers.provider.send("evm_mine", []);
@@ -968,17 +910,13 @@ describe("Hash Valley tests", function () {
 
       expect(await grape.balanceOf(accounts[1].address)).to.equal(0);
       await vineyard.connect(accounts[1]).harvestGrapes(1);
-      expect(await grape.balanceOf(accounts[1].address)).to.equal(
-        utils.parseEther("2380")
-      );
+      expect(await grape.balanceOf(accounts[1].address)).to.equal(utils.parseEther("2380"));
 
       time = 14 * day;
       await ethers.provider.send("evm_increaseTime", [time]);
       await ethers.provider.send("evm_mine", []);
       await vineyard.connect(accounts[1]).harvestGrapes(1);
-      expect(await grape.balanceOf(accounts[1].address)).to.equal(
-        utils.parseEther("9047")
-      );
+      expect(await grape.balanceOf(accounts[1].address)).to.equal(utils.parseEther("9047"));
       expect(await vineyard.connect(accounts[1]).harvest(1))
         .to.emit(vineyard, "HarvestFailure")
         .withArgs(1, 1);
@@ -1038,15 +976,11 @@ describe("Hash Valley tests", function () {
       await bottle.setApprovalForAll(cellar.address, true);
       await cellar.stake(0);
       // fast forward 4 planting times
-      await ethers.provider.send("evm_increaseTime", [
-        (4 * 12 * 7 + 4) * 86400,
-      ]);
+      await ethers.provider.send("evm_increaseTime", [(4 * 12 * 7 + 4) * 86400]);
       await ethers.provider.send("evm_mine", []);
       await cellar.withdraw(0);
 
-      expect(
-        (await vinegar.balanceOf(accounts[0].address)).toString() == "0"
-      ).to.equal(false);
+      expect((await vinegar.balanceOf(accounts[0].address)).toString() == "0").to.equal(false);
 
       await vineyard.plantMultiple([0, 1]);
 
@@ -1078,15 +1012,11 @@ describe("Hash Valley tests", function () {
       await bottle.setApprovalForAll(cellar.address, true);
       await cellar.stake(0);
       // fast forward 4 planting times
-      await ethers.provider.send("evm_increaseTime", [
-        (4 * 12 * 7 + 4) * 86400,
-      ]);
+      await ethers.provider.send("evm_increaseTime", [(4 * 12 * 7 + 4) * 86400]);
       await ethers.provider.send("evm_mine", []);
       await cellar.withdraw(0);
 
-      expect(
-        (await vinegar.balanceOf(accounts[0].address)).toString() == "0"
-      ).to.equal(false);
+      expect((await vinegar.balanceOf(accounts[0].address)).toString() == "0").to.equal(false);
 
       await vineyard.plantMultiple([0, 1]);
 
@@ -1200,9 +1130,7 @@ describe("Hash Valley tests", function () {
       await vineyard.connect(accounts[1]).suggest(2, newCid, newAddress);
 
       await ethers.provider.send("evm_increaseTime", [7 * day]);
-      await expect(vineyard.complete(accounts[0].address)).to.be.revertedWith(
-        "!highest"
-      );
+      await expect(vineyard.complete(accounts[0].address)).to.be.revertedWith("!highest");
       await vineyard.complete(accounts[1].address);
     });
   });

@@ -7,7 +7,7 @@ async function deploy() {
   try {
     addresses = require(`../deployments/deployment_${network.chainId}.json`);
   } catch {
-    throw("couldnt load addresses");
+    throw "couldnt load addresses";
   }
 
   let market_address;
@@ -30,10 +30,7 @@ async function deploy() {
   console.log(addresses.address_storage_address, market_address);
 
   const Royalty = await hre.ethers.getContractFactory("RoyaltyManagerV2");
-  const royalty = await Royalty.deploy(
-    addresses.address_storage_address,
-    market_address
-  );
+  const royalty = await Royalty.deploy(addresses.address_storage_address, market_address);
   await royalty.deployed();
   console.log("Royalty Manager deployed to:", royalty.address);
 

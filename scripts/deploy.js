@@ -69,11 +69,7 @@ async function deploy() {
   console.log("WineURi deployed to:", wineUri.address);
 
   const WineBottle = await hre.ethers.getContractFactory("WineBottle");
-  const bottle = await WineBottle.deploy(
-    config.bottle_base_uri,
-    storage.address,
-    config.eraBounds
-  );
+  const bottle = await WineBottle.deploy(config.bottle_base_uri, storage.address, config.eraBounds);
   await bottle.deployed();
   console.log("Bottle deployed to:", bottle.address);
 
@@ -133,9 +129,10 @@ async function deploy() {
   console.log("royalties initialized");
 
   const recips = config.airdrop_recipients.concat(config.raffle_winners);
-  const vals = config.airdrop_values.concat(
-    Array(config.raffle_winners.length).fill(5)
-  );
+  const vals = config.airdrop_values
+    .concat(Array(config.airdrop_recipients.length - config.airdrop_values.length).fill(3))
+    .concat(Array(config.raffle_winners.length).fill(5));
+
   await give.airdrop(recips, vals);
   console.log("vineyard airdrop complete");
 
@@ -179,15 +176,11 @@ async function deploy() {
     fs.mkdirSync("deployments");
   }
 
-  fs.writeFileSync(
-    `deployments/deployment_${network.chainId}.json`,
-    data,
-    (err) => {
-      if (err) {
-        throw err;
-      }
+  fs.writeFileSync(`deployments/deployment_${network.chainId}.json`, data, (err) => {
+    if (err) {
+      throw err;
     }
-  );
+  });
 }
 
 // We recommend this pattern to be able to use async/await everywhere

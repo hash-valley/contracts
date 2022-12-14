@@ -7,7 +7,7 @@ async function start() {
   try {
     addresses = require(`../deployments/deployment_${chainId}.json`);
   } catch {
-    throw("couldnt load addresses");
+    throw "couldnt load addresses";
   }
 
   const signer = await ethers.getSigner();
@@ -21,7 +21,7 @@ async function start() {
   const approvalTx = await vineyard.withdrawAll();
   const approvalReceipt = await approvalTx.wait();
   console.log(`tx mined, gas used ${approvalReceipt.gasUsed.toString()}`);
-  console.log(approvalTx.hash)
+  console.log(approvalTx.hash);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
