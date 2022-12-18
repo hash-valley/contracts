@@ -149,9 +149,13 @@ async function deploy() {
     await vineyard.unlockLocale();
   }
 
+  console.log("getting block number for output");
+  const firstTxDetails = await hre.ethers.provider.getTransaction(
+    storage_deploy_tx.deployTransaction.hash
+  );
   const data = JSON.stringify(
     {
-      startBlock: storage_deploy_tx.deployTransaction.blockNumber,
+      startBlock: firstTxDetails.blockNumber,
       vine_address: vineyard.address,
       cellar_address: cellar.address,
       bottle_address: bottle.address,
