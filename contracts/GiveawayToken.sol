@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract GiveawayToken is ERC20 {
-    constructor() ERC20("Wine Merchant", "WM") {
-        _mint(msg.sender, 250 * 1e18);
+    constructor() ERC20("VIP Ticket", "VIP") {
+        _mint(msg.sender, 300 * 1e18);
     }
 
     /// @notice burns one token after it has been spent
