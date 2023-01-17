@@ -9,6 +9,7 @@ chai.use(solidity);
 const config = require("../config");
 
 const day = 24 * 60 * 60;
+const week = 7 * day;
 const month = 30 * day;
 const spCost = ethers.utils.parseEther("0.01");
 
@@ -156,17 +157,17 @@ describe("Hash Valley tests", function () {
       ]);
       expect(vals.map((x) => x.toString())).to.eql([
         "0",
+        "0",
+        utils.parseEther("0.01").toString(),
         utils.parseEther("0.01").toString(),
         utils.parseEther("0.02").toString(),
+        utils.parseEther("0.02").toString(),
+        utils.parseEther("0.03").toString(),
         utils.parseEther("0.03").toString(),
         utils.parseEther("0.04").toString(),
+        utils.parseEther("0.04").toString(),
+        utils.parseEther("0.04").toString(),
         utils.parseEther("0.05").toString(),
-        utils.parseEther("0.06").toString(),
-        utils.parseEther("0.07").toString(),
-        utils.parseEther("0.08").toString(),
-        utils.parseEther("0.09").toString(),
-        utils.parseEther("0.09").toString(),
-        utils.parseEther("0.1").toString(),
       ]);
     });
 
@@ -371,28 +372,20 @@ describe("Hash Valley tests", function () {
       await vineyard.connect(accounts[1]).harvest(0);
     });
 
-    it("sprinkler lasts 3 years", async () => {
+    it("sprinkler lasts 12 weeks", async () => {
       await vineyard.connect(accounts[1]).buySprinkler(0, { value: spCost });
 
-      let firstSeasonLength = Number(await vineyard.firstSeasonLength());
-      let seasonLength = Number(await vineyard.seasonLength());
-      await ethers.provider.send("evm_increaseTime", [firstSeasonLength]);
-      for (let i = 0; i < 10; i++) {
-        await ethers.provider.send("evm_increaseTime", [seasonLength]);
-      }
+      await ethers.provider.send("evm_increaseTime", [3 * week]);
       await ethers.provider.send("evm_mine", []);
 
       await vineyard.connect(accounts[1]).plant(0);
-      await ethers.provider.send("evm_increaseTime", [seasonLength - 10]);
+      await ethers.provider.send("evm_increaseTime", [8 * week + 6 * day]);
       await ethers.provider.send("evm_mine", []);
-      await vineyard.connect(accounts[1]).harvest(0);
+      expect(await vineyard.vineyardAlive(0)).to.equal(true);
 
-      await ethers.provider.send("evm_increaseTime", [100]);
+      await ethers.provider.send("evm_increaseTime", [3 * day]);
       await ethers.provider.send("evm_mine", []);
-      await vineyard.connect(accounts[1]).plant(0);
-      await ethers.provider.send("evm_increaseTime", [seasonLength - 200]);
-      await ethers.provider.send("evm_mine", []);
-      await expect(vineyard.connect(accounts[1]).harvest(0)).to.be.revertedWith("!alive");
+      expect(await vineyard.vineyardAlive(0)).to.equal(false);
     });
 
     it("can't harvest early", async () => {
@@ -879,6 +872,8 @@ describe("Hash Valley tests", function () {
       await vineyard.newVineyards([12, 13, 4]);
       await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
       await vineyard.connect(accounts[1]).newVineyards([12, 13, 4]);
+      await vineyard.buySprinkler(0, { value: spCost });
+      await vineyard.buySprinkler(1, { value: spCost });
       await vineyard.buySprinkler(0, { value: spCost });
       await vineyard.buySprinkler(1, { value: spCost });
 
