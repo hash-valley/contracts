@@ -45,7 +45,7 @@ contract Vineyard is ERC721, ERC2981 {
     uint256 public totalSupply;
     uint256 public immutable firstSeasonLength = 3 weeks;
     uint256 public immutable seasonLength = 12 weeks;
-    uint256 public immutable maxVineyards = 5500;
+    uint256 public immutable maxVineyards = 4500;
     uint256 public gameStart;
 
     mapping(address => uint8) private freeMints;

@@ -151,9 +151,6 @@ describe("Hash Valley tests", function () {
         saleParams.getSalesPrice(3500),
         saleParams.getSalesPrice(4000),
         saleParams.getSalesPrice(4500),
-        saleParams.getSalesPrice(5000),
-        saleParams.getSalesPrice(5499),
-        saleParams.getSalesPrice(5500),
       ]);
       expect(vals.map((x) => x.toString())).to.eql([
         "0",
@@ -165,9 +162,6 @@ describe("Hash Valley tests", function () {
         utils.parseEther("0.03").toString(),
         utils.parseEther("0.03").toString(),
         utils.parseEther("0.04").toString(),
-        utils.parseEther("0.04").toString(),
-        utils.parseEther("0.04").toString(),
-        utils.parseEther("0.05").toString(),
       ]);
     });
 
@@ -197,7 +191,7 @@ describe("Hash Valley tests", function () {
       const max = Number(await vineyard.maxVineyards());
       for (let i = 0; i < max; i++) {
         await vineyard.newVineyards([4, 2, 4], {
-          value: ethers.utils.parseEther("0.09"),
+          value: ethers.utils.parseEther("0.04"),
         });
       }
 
@@ -210,7 +204,7 @@ describe("Hash Valley tests", function () {
       const tx = await vineyard.newVineyardGiveaway([4, 2, 4]);
       expect(tx)
         .to.emit(vineyard, "Transfer")
-        .withArgs("0x0000000000000000000000000000000000000000", accounts[0].address, 5500);
+        .withArgs("0x0000000000000000000000000000000000000000", accounts[0].address, 4500);
     });
 
     it("Correct number of params", async () => {
