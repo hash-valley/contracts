@@ -74,6 +74,7 @@ describe("Hash Valley tests", function () {
       config.climates
     );
     await vineyard.deployed();
+    await vineyard.setSaleOpen(true);
 
     const Vinegar = await hre.ethers.getContractFactory("Vinegar");
     vinegar = await Vinegar.deploy(storage.address);

@@ -22,7 +22,7 @@ import "./interfaces/IAlchemy.sol";
 import "./interfaces/IGrape.sol";
 import "./interfaces/IVinegar.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 interface IGiveawayToken {
     function burnOne(address caller) external;
@@ -47,6 +47,7 @@ contract Vineyard is ERC721, ERC2981 {
     uint256 public immutable seasonLength = 12 weeks;
     uint256 public immutable maxVineyards = 4500;
     uint256 public gameStart;
+    bool public saleOpen;
 
     mapping(address => uint8) private freeMints;
 
@@ -172,6 +173,7 @@ contract Vineyard is ERC721, ERC2981 {
 
     /// @notice private vineyard minting function
     function _mintVineyard(int256[] calldata _tokenAttributes, bool giveaway) private {
+        require(saleOpen, "sale not open");
         uint256 tokenId = totalSupply;
         if (!giveaway) {
             require(tokenId < maxVineyards, "Max vineyards minted");
@@ -224,15 +226,20 @@ contract Vineyard is ERC721, ERC2981 {
 
     // LOGISTICS
     /// @notice marks game as started triggering the first planting season to begin
-    function start() public {
+    function start() external {
         require(_msgSender() == deployer, "!deployer");
         require(gameStart == 0, "already started");
         gameStart = block.timestamp;
         emit Start(uint48(block.timestamp));
     }
 
+    function setSaleOpen(bool _saleOpen) external {
+        require(_msgSender() == deployer, "!deployer");
+        saleOpen = _saleOpen;
+    }
+
     /// @notice withdraws sale proceeds
-    function withdrawAll() public payable {
+    function withdrawAll() external payable {
         require(_msgSender() == deployer, "!deployer");
         require(payable(_msgSender()).send(address(this).balance));
     }
@@ -258,7 +265,7 @@ contract Vineyard is ERC721, ERC2981 {
     }
 
     /// @notice plant multiple vineyards in one tx
-    function plantMultiple(uint256[] calldata _tokenIds) public {
+    function plantMultiple(uint256[] calldata _tokenIds) external {
         for (uint8 i = 0; i < _tokenIds.length; i++) {
             plant(_tokenIds[i]);
         }
@@ -302,7 +309,7 @@ contract Vineyard is ERC721, ERC2981 {
     }
 
     /// @notice harvest multiple vineyards in one tx
-    function harvestMultiple(uint256[] calldata _tokenIds) public {
+    function harvestMultiple(uint256[] calldata _tokenIds) external {
         for (uint8 i = 0; i < _tokenIds.length; i++) {
             harvest(_tokenIds[i]);
         }
@@ -315,7 +322,7 @@ contract Vineyard is ERC721, ERC2981 {
     }
 
     /// @notice water multiple vineyards in one tx
-    function waterMultiple(uint256[] calldata _tokenIds) public {
+    function waterMultiple(uint256[] calldata _tokenIds) external {
         for (uint8 i = 0; i < _tokenIds.length; i++) {
             water(_tokenIds[i]);
         }
@@ -360,7 +367,7 @@ contract Vineyard is ERC721, ERC2981 {
     }
 
     /// @notice harvest grapes
-    function harvestGrapes(uint256 _tokenId) public {
+    function harvestGrapes(uint256 _tokenId) external {
         (uint256 seasonStart, uint256 _currSeason) = startOfSeason();
 
         require(ownerOf(_tokenId) == _msgSender(), "!owned");
@@ -407,7 +414,7 @@ contract Vineyard is ERC721, ERC2981 {
     }
 
     /// @notice current harvest streak for vineyard
-    function currentStreak(uint256 _tokenId) public view returns (uint16) {
+    function currentStreak(uint256 _tokenId) external view returns (uint16) {
         uint256 season = currSeason();
         if (season == 0) return 0;
         if (lastHarvested[_tokenId] >= currSeason() - 1) {
