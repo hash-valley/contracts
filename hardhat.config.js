@@ -36,7 +36,7 @@ module.exports = {
       url: "http://127.0.0.1:8545/",
     },
     optimisticGoerli: {
-      url: `https://opt-goerli.g.alchemy.com/v2/${config.alchemy_op_goerli}`,
+      url: `https://goerli.optimism.io`,
       accounts: [`0x${config.test_key}`],
     },
     optimisticEthereum: {

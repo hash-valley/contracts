@@ -1124,4 +1124,16 @@ describe("Hash Valley tests", function () {
       await vineyard.complete(accounts[1].address);
     });
   });
+
+  describe("Badge", async () => {
+    it("test token uri", async () => {
+      const TY = await hre.ethers.getContractFactory("Badge");
+      const ty = await TY.deploy(config.ty_uri);
+      await ty.deployed();
+
+      await ty.airdrop(config.airdrop_recipients);
+      let uri = await ty.tokenURI(0);
+      console.log(uri)
+    });
+  });
 });
