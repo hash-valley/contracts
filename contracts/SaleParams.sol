@@ -4,7 +4,7 @@ pragma solidity ^0.8.12;
 contract SaleParams {
     function getSalesPrice(uint256 supply) external pure returns (uint256) {
         if (supply < 1000) return 0 ether;
-        return ((supply - 500) / 1000) * .01 ether;
+        return ((supply - 500) / 1000) * 0.01 ether;
     }
 
     function airdropCutoff() external pure returns (uint256) {
@@ -16,6 +16,6 @@ contract SaleParams {
     }
 
     function sprinklerPrice() external pure returns (uint256) {
-        return 0.01 ether;
+        return 0 ether;
     }
 }
