@@ -1,5 +1,6 @@
 {
   "name": "hash-valley-winery",
+  "license": "MIT",
   "scripts": {
     "test": "npx hardhat test --network hardhat",
     "compile": "npx hardhat compile"
