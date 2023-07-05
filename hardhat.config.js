@@ -29,7 +29,7 @@ module.exports = {
       },
     },
   },
-  defaultNetwork: "hardhat",
+  defaultNetwork: "optimisticEthereum",
   networks: {
     hardhat: {},
     localhost: {

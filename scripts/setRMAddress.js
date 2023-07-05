@@ -2,9 +2,7 @@ const hre = require("hardhat");
 const ethers = hre.ethers;
 
 const CONTRACT = "address_storage_address";
-
-// deployer address, return to contract when done
-const NEW_RM = "0x00000023F6B4ED7185E7B8928072a8bfEC660ff3";
+const NEW_RM = "0x8b42d2A6FDd74eE31c28240dA144d5264106e83C";
 
 async function start() {
   const { chainId } = await ethers.provider.getNetwork();

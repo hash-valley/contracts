@@ -12,26 +12,26 @@ async function deploy() {
   const storage_deploy_tx = await storage.deployed();
   console.log("Address Storage deployed to:", storage.address);
 
-  let market_address;
-  if (network.chainId === 420) {
-    //goerli
-    market_address = config.goerli_quixotic;
-  } else if (network.chainId === 10) {
-    // optimism
-    market_address = config.op_quixotic;
-  } else if (network.chainId === 31337) {
-    // localhost
-    const Quixotic = await hre.ethers.getContractFactory("DummyQuixotic");
-    quixotic = await Quixotic.deploy();
-    await quixotic.deployed();
-    market_address = quixotic.address;
-    console.log(`Mock market deployed to ${quixotic.address}`);
-  } else {
-    throw "unrecognized network";
-  }
+  // let market_address;
+  // if (network.chainId === 420) {
+  //   //goerli
+  //   market_address = config.goerli_quixotic;
+  // } else if (network.chainId === 10) {
+  //   // optimism
+  //   market_address = config.op_quixotic;
+  // } else if (network.chainId === 31337) {
+  //   // localhost
+  //   const Quixotic = await hre.ethers.getContractFactory("DummyQuixotic");
+  //   quixotic = await Quixotic.deploy();
+  //   await quixotic.deployed();
+  //   market_address = quixotic.address;
+  //   console.log(`Mock market deployed to ${quixotic.address}`);
+  // } else {
+  //   throw "unrecognized network";
+  // }
 
   const Royalty = await hre.ethers.getContractFactory("RoyaltyManager");
-  const royalty = await Royalty.deploy(storage.address, market_address);
+  const royalty = await Royalty.deploy(storage.address);
   await royalty.deployed();
   console.log("Royalty Manager deployed to:", royalty.address);
 
