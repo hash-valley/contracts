@@ -30,7 +30,7 @@ contract Alchemy is IAlchemy {
     /// @notice disable vineyard for season
     function wither(uint256 target) public {
         require(withered[target].deadline == 0, "already withering");
-        uint256 deadline = block.timestamp + 16 hours; // TODO numbers
+        uint256 deadline = block.timestamp + 16 hours;
         uint256 cost = ISpellParams(addressStorage.spellParams()).witherCost(
             target
         );

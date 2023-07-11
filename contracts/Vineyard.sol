@@ -297,7 +297,7 @@ contract Vineyard is ERC721, ERC2981 {
         }
         lastHarvested[_tokenId] = season;
         if (IAlchemy(addressStorage.alchemy()).vitalized(_tokenId) == season) {
-            xp[_tokenId] += 2500 * streak[_tokenId]; // TODO: numbers
+            xp[_tokenId] += 2500 * streak[_tokenId];
         } else {
             xp[_tokenId] += 1000 * streak[_tokenId];
         }
@@ -410,7 +410,7 @@ contract Vineyard is ERC721, ERC2981 {
     /// @notice max grapes a vineyard can yield
     function maxGrapes(uint256 _tokenId) public view returns (uint256) {
         uint256 baseRate = 10_000;
-        return xp[_tokenId] + baseRate; // TODO: numbers
+        return xp[_tokenId] + baseRate;
     }
 
     /// @notice current harvest streak for vineyard

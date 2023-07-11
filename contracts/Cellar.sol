@@ -99,7 +99,7 @@ contract Cellar {
         // probability of spoiling
         uint256 rand = random(
             string(abi.encodePacked(block.timestamp, _tokenID))
-        ) % 100_00; // TODO: better rand num?
+        ) % 100_00;
         uint256 stakedDays = (withdrawn[_tokenID] - staked[_tokenID]) /
             (1 days);
 
